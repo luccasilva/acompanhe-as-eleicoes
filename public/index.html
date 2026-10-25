@@ -229,6 +229,7 @@ tr:hover td { background: var(--page); }
     </div>
     <div class="split" id="pl-split" aria-hidden="true"></div>
     <div class="det" id="pl-dif" style="margin-top:8px"></div>
+    <p class="det" id="pl-por-que" style="margin:8px 0 0"></p>
   </section>
 
   <section class="grade">
@@ -480,6 +481,7 @@ function render() {
     : temDado ? "praticamente tudo já foi apurado" : `quanto ${A} precisa dos votos que ainda faltam`;
 
   placar(d.oficial, A, B);
+  porQueParcial(d, A, B);
   graficoProjecao(d.historico);
   graficoProb(d.historico);
   exterior(d.exterior, A, B);
@@ -505,6 +507,26 @@ function placar(of, A, B) {
   $("pl-b-v").textContent = fmtN(b) + " votos";
   $("pl-split").innerHTML = `<div style="flex:${pa};background:var(--a)"></div><div style="flex:${1 - pa};background:var(--b)"></div>`;
   $("pl-dif").textContent = `${a >= b ? A : B} à frente por ${fmtN(Math.abs(a - b))} votos · ${fmt(of.secoes_frac, 2)} das seções apuradas · TSE: ${of.gerado || "—"}`;
+}
+
+// Por que o parcial difere da projeção: quanto o que já foi apurado votou no Lula no 1º turno,
+// comparado com o país inteiro, e quais estados grandes estão mais e menos apurados.
+function porQueParcial(d, A, B) {
+  const el = $("pl-por-que");
+  const frac = Number(d.modelo.apurado.frac_eleitores) || 0;
+  if (frac < 0.01 || frac > 0.98) { el.textContent = ""; return; }
+  const ufs = d.modelo.uf.filter(u => u.uf !== "zz" && u.eleitores > 0);
+  let peso = 0, soma = 0;
+  for (const u of ufs) { const w = u.frac_eleitores * u.eleitores; peso += w; soma += w * u.base_1t_dois; }
+  if (!peso) { el.textContent = ""; return; }
+  const baseApurado = soma / peso, baseBrasil = d.primeiro_turno.base_dois;
+  const grandes = ufs.slice().sort((x, y) => y.eleitores - x.eleitores).slice(0, 12)
+    .sort((x, y) => y.frac_eleitores - x.frac_eleitores);
+  const lista = us => us.map(u => `${u.uf.toUpperCase()} ${fmt(u.frac_eleitores, 0)}`).join(", ");
+  const lado = baseApurado < baseBrasil - 0.005 ? `puxado para o ${B}` : baseApurado > baseBrasil + 0.005 ? `puxado para o ${A}` : "equilibrado";
+  el.textContent = `Por que o parcial difere da projeção: os lugares já apurados deram ${fmt(baseApurado, 1)} ao ${A} no 1º turno ` +
+    `(entre os dois), contra ${fmt(baseBrasil, 1)} no país inteiro, então o parcial está ${lado}. ` +
+    `Entre os maiores estados, os mais apurados são ${lista(grandes.slice(0, 3))}; os menos, ${lista(grandes.slice(-3).reverse())}.`;
 }
 
 // ---------- exterior ----------
