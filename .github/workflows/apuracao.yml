@@ -16,6 +16,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write # para cada execução deixar a próxima na fila
 
 jobs:
   apuracao:
@@ -34,6 +35,15 @@ jobs:
             echo "Apuração encerrada; nada a fazer."
             echo "encerrada=1" >> "$GITHUB_OUTPUT"
           fi
+
+      # O agendamento do GitHub é "melhor esforço" e pode não disparar por um bom tempo. Para não
+      # depender dele, cada execução já deixa a próxima na fila; pelo grupo de concorrência, ela só
+      # começa quando esta terminar.
+      - name: Deixar a próxima execução na fila
+        if: steps.janela.outputs.encerrada != '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run apuracao.yml --repo "$GITHUB_REPOSITORY" --ref main
 
       - uses: actions/checkout@v4
         if: steps.janela.outputs.encerrada != '1'
