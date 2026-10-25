@@ -55,6 +55,7 @@ def carregar(ano):
         "capital": np.array([m in capitais for m in muns]),
         "elim": np.column_stack([soma(d["t1_elim"][:, j].astype(float)) for j in range(d["t1_elim"].shape[1])]),
         "nomes_elim": [str(n) for n in d["elim"]],
+        "secoes": np.bincount(mun_idx, minlength=len(muns)).astype(float),
     }
     zona_id = np.unique(np.char.add(chave, d["zona"].astype(str)), return_inverse=True)[1]
     za1 = np.bincount(zona_id, t1[:, 0]); zb1 = np.bincount(zona_id, t1[:, 1])

@@ -36,6 +36,9 @@ PARAMS = {
     "c_porte": 0.0,  # valores iniciais, reestimados a cada leitura (2014: 2,2 p.p.; 2018: 1,4; 2022: 0,8)
     "s_inf_min": 0.002,
     "sigma_zona": 0.02,  # o pedaço apurado de um município não é idêntico ao todo
+    "sigma_secao": 0.09,  # DP da fatia do PT entre seções da mesma cidade (2014: 11; 2018: 10; 2022: 7,8 p.p.)
+    "s_inf_max": 0.03,  # teto da heterogeneidade entre municípios (máximo histórico: 2,2 p.p. em 2014)
+    "min_fechados_sigma": 100,  # municípios fechados necessários para reestimar a heterogeneidade
     "sigma_parcial": 0.0075,  # prior do viés comum dos municípios parcialmente apurados (calibrado)
     "sd_prior_beta": 0.10,  # prior dos coeficientes das covariáveis de voto
     "sd_prior_porte": 0.03,
@@ -169,7 +172,14 @@ def projetar(base, apurado, params=None, n_sim=10_000, seed=0):
     i_obs = np.flatnonzero(obs)
     Zo = desenho(i_obs, True)
     yo = y[i_obs]
-    ruido_obs = 0.25 / np.maximum(v2[i_obs], 1) + p["sigma_zona"] ** 2 * (1 - frac[i_obs])
+    # O pedaço apurado de um município parcial é uma amostra das suas seções, e seções da mesma
+    # cidade diferem muito entre si (DP de 8 a 11 p.p. na fatia do PT em 2014–2022). Com 1 ou 2
+    # seções contadas, a "virada" dele é quase só ruído de composição; com 50, já é informativa.
+    secoes = np.asarray(base["secoes"], float) if base.get("secoes") is not None else np.maximum(eleitores / 350, 1)
+    k_apuradas = np.maximum(frac * secoes, 1)
+    ruido_comp = (1 - frac) * (p["sigma_zona"] ** 2 + p["sigma_secao"] ** 2 / k_apuradas)
+    ruido_obs = 0.25 / np.maximum(v2[i_obs], 1) + ruido_comp[i_obs]
+    fechado_obs = frac[i_obs] >= 0.999
     s_inf, c_porte = p["s_inf"], p["c_porte"]
     for _ in range(3):
         sig2 = _sigma_mun2(eleitores[i_obs], s_inf, c_porte)
@@ -177,14 +187,15 @@ def projetar(base, apurado, params=None, n_sim=10_000, seed=0):
         A = Zo.T @ (Zo * w[:, None]) + np.diag(precisao_prior)
         cov = np.linalg.inv(A)
         theta = cov @ (Zo.T @ (w * yo))
-        if len(i_obs) < 100:
+        if fechado_obs.sum() < p["min_fechados_sigma"]:
             break
-        # σ² = s_inf² + c/eleitores por mínimos quadrados nos resíduos ao quadrado, um peso por
-        # município (sem isso as cidades grandes, de resíduo pequeno, apagariam o termo c)
-        resid2 = (yo - Zo @ theta) ** 2 - ruido_obs
-        M = np.column_stack([np.ones_like(resid2), 1 / np.maximum(eleitores[i_obs], 100)])
+        # σ² = s_inf² + c/eleitores por mínimos quadrados nos resíduos ao quadrado, só nos municípios
+        # já fechados (nos parciais o resíduo é dominado pela composição) e com teto no maior valor
+        # histórico; um peso por município, senão as cidades grandes apagariam o termo c
+        resid2 = ((yo - Zo @ theta) ** 2 - ruido_obs)[fechado_obs]
+        M = np.column_stack([np.ones_like(resid2), 1 / np.maximum(eleitores[i_obs][fechado_obs], 100)])
         coef = np.linalg.lstsq(M, resid2, rcond=None)[0]
-        s_inf = float(np.sqrt(max(coef[0], p["s_inf_min"] ** 2)))
+        s_inf = float(np.clip(np.sqrt(max(coef[0], 0)), p["s_inf_min"], p["s_inf_max"]))
         c_porte = float(max(coef[1], 0.0))
 
     # ---------- o que falta: votos esperados e fatia de A em cada município ----------

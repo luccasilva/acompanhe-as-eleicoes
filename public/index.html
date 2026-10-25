@@ -102,6 +102,10 @@ h2 .estrela { width: 15px; flex: none; color: var(--brand); }
 .destaque .numero { font: 800 96px/1 var(--display); letter-spacing: 0; margin-top: 8px; }
 .destaque .contra { color: rgba(255, 255, 255, .9); }
 .split { display: flex; height: 10px; margin-top: 16px; gap: 2px; }
+.placar-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 8px; }
+.placar .rotulo { color: var(--ink-2); font-size: 13px; }
+.placar-num { font: 700 44px/1.1 var(--display); margin-top: 2px; }
+.placar .det { color: var(--muted); font-size: 13px; }
 .split div { border-radius: 4px; }
 .destaque .split { height: 16px; padding: 3px; border-radius: 7px; background: #fff; }
 .destaque .split:empty { display: none; }
@@ -214,6 +218,17 @@ tr:hover td { background: var(--page); }
       <div class="card tile"><div class="rotulo">Virada sobre o 1º turno</div><div class="valor" id="t-virada">—</div><div class="det" id="t-virada-d"></div></div>
       <div class="card tile"><div class="rotulo">O que falta apurar</div><div class="valor" id="t-falta">—</div><div class="det" id="t-falta-d"></div></div>
     </div>
+  </section>
+
+  <section class="card placar" style="margin-bottom:16px">
+    <h2><i class="estrela" aria-hidden="true"></i>Placar oficial agora</h2>
+    <p class="sub">Os votos válidos que o TSE já apurou, atualizados a cada leitura. É o parcial, não a projeção: muda conforme as urnas chegam.</p>
+    <div class="placar-grid">
+      <div><div class="rotulo"><i class="chave" style="background:var(--a)"></i><span data-a>Lula</span></div><div class="placar-num" id="pl-a">—</div><div class="det" id="pl-a-v"></div></div>
+      <div><div class="rotulo"><i class="chave" style="background:var(--b)"></i><span id="pl-b-nome">Flávio Bolsonaro</span></div><div class="placar-num" id="pl-b">—</div><div class="det" id="pl-b-v"></div></div>
+    </div>
+    <div class="split" id="pl-split" aria-hidden="true"></div>
+    <div class="det" id="pl-dif" style="margin-top:8px"></div>
   </section>
 
   <section class="grade">
@@ -464,11 +479,32 @@ function render() {
     ? `é o que ${A} precisa do que falta · projeção dele nesse resto: ${fmt(m.fatia_a_no_que_falta, 1)}`
     : temDado ? "praticamente tudo já foi apurado" : `quanto ${A} precisa dos votos que ainda faltam`;
 
+  placar(d.oficial, A, B);
   graficoProjecao(d.historico);
   graficoProb(d.historico);
   exterior(d.exterior, A, B);
   mapa(m.uf);
   tabela(m.uf);
+}
+
+// ---------- placar oficial (o parcial do TSE, sem projeção) ----------
+function placar(of, A, B) {
+  $("pl-b-nome").textContent = B;
+  const a = Number(of.a) || 0, b = Number(of.b) || 0, total = a + b;
+  if (!total) {
+    ["pl-a", "pl-b"].forEach(id => $(id).textContent = "—");
+    ["pl-a-v", "pl-b-v"].forEach(id => $(id).textContent = "");
+    $("pl-split").innerHTML = "";
+    $("pl-dif").textContent = "Ainda sem votos apurados pelo TSE.";
+    return;
+  }
+  const pa = a / total;
+  $("pl-a").textContent = fmt(pa, 2);
+  $("pl-b").textContent = fmt(1 - pa, 2);
+  $("pl-a-v").textContent = fmtN(a) + " votos";
+  $("pl-b-v").textContent = fmtN(b) + " votos";
+  $("pl-split").innerHTML = `<div style="flex:${pa};background:var(--a)"></div><div style="flex:${1 - pa};background:var(--b)"></div>`;
+  $("pl-dif").textContent = `${a >= b ? A : B} à frente por ${fmtN(Math.abs(a - b))} votos · ${fmt(of.secoes_frac, 2)} das seções apuradas · TSE: ${of.gerado || "—"}`;
 }
 
 // ---------- exterior ----------

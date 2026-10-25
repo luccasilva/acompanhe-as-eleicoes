@@ -53,6 +53,7 @@ def carregar_base():
         "comparec1": np.array([m["comparec"] for m in muns], float),
         "eleitores": np.array([m["eleitores"] for m in muns], float),
         "capital": np.array([m["capital"] for m in muns]),
+        "secoes": np.array([m["secoes"] for m in muns], float),
     }
     # votos de cada eliminado no 1º turno; o modelo usa como covariável própria os que têm ≥ 1%
     totais = {}
