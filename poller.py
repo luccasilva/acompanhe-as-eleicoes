@@ -10,6 +10,7 @@ avançaram, baixa só esses, roda o modelo e regrava o JSON que a página lê.
 
 import argparse
 import datetime as dt
+import gzip
 import json
 import os
 import time
@@ -25,6 +26,10 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 BASE_1T = os.path.join(AQUI, "data", "base_1t_2026.json")
 SAIDA = os.path.join(AQUI, "public", "live.json")
 ARQ_BU_EXTERIOR = os.path.join(AQUI, "data", "exterior_bu.json")
+PASTA_SNAPSHOTS = os.path.join(AQUI, "data", "snapshots")
+# a chance de vitória só aparece com dado suficiente: no backtest (2014, 2018, 2022) as únicas
+# chamadas erradas da versão 2 aconteceram com até 5% apurado, num cenário extremo
+LIMIAR_CHANCE = {"frac": 0.10, "ufs": 20}
 
 NOME_UF = {
     "ac": "Acre", "al": "Alagoas", "am": "Amazonas", "ap": "Amapá", "ba": "Bahia", "ce": "Ceará",
@@ -49,6 +54,14 @@ def carregar_base():
         "eleitores": np.array([m["eleitores"] for m in muns], float),
         "capital": np.array([m["capital"] for m in muns]),
     }
+    # votos de cada eliminado no 1º turno; o modelo usa como covariável própria os que têm ≥ 1%
+    totais = {}
+    for m in muns:
+        for n, v in m["outros"].items():
+            totais[n] = totais.get(n, 0) + v
+    elim = [n for n, _ in sorted(totais.items(), key=lambda x: -x[1])][:4]
+    base["elim"] = np.array([[m["outros"].get(n, 0) for n in elim] for m in muns], float)
+    base["nomes_elim"] = elim
     return muns, base
 
 
@@ -258,6 +271,20 @@ def resumo_exterior(muns, base, apurado, bu=None):
     }
 
 
+def chance_pronta(resultado):
+    ap = resultado["apurado"]
+    return ap["frac_eleitores"] >= LIMIAR_CHANCE["frac"] and ap.get("ufs_com_dado", 0) >= LIMIAR_CHANCE["ufs"]
+
+
+def guardar_snapshot(fonte, leitura):
+    """Estado por município a cada ciclo: a ordem real de chegada de hoje alimenta o backtest futuro."""
+    os.makedirs(PASTA_SNAPSHOTS, exist_ok=True)
+    agora = dt.datetime.now()
+    with gzip.open(os.path.join(PASTA_SNAPSHOTS, f"estado_{agora:%Y%m%d_%H%M%S}.json.gz"), "wt") as f:
+        json.dump({"hora": agora.isoformat(timespec="seconds"), "oficial": leitura["oficial"],
+                   "estado": fonte.estado()}, f)
+
+
 def montar_json(muns, base, leitura, resultado, historico, modo, intervalo, bu_exterior=None):
     of = leitura["oficial"]
     validos_of = of["a"] + of["b"]
@@ -266,10 +293,16 @@ def montar_json(muns, base, leitura, resultado, historico, modo, intervalo, bu_e
         linha["nome"] = NOME_UF[linha["uf"]]
         linha["eleitores"] = pesos[linha["uf"]]
     a1, b1, v1 = base["a1"].sum(), base["b1"].sum(), base["validos1"].sum()
+    validos_mun = resultado["apurado"]["a"] + resultado["apurado"]["b"]
     return {
         "atualizado": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
         "modo": modo,
         "intervalo_s": intervalo,
+        "versao_modelo": resultado.get("versao", 1),
+        "chance": {"pronta": chance_pronta(resultado), **LIMIAR_CHANCE},
+        # se a soma dos municípios que o poller tem diverge do total oficial, há dado atrasado
+        "consistencia": {"validos_oficiais": validos_of, "validos_municipios": validos_mun,
+                         "diferenca": (validos_of - validos_mun) / validos_of if validos_of else 0.0},
         "candidatos": {"a": {"nome": "Lula", "numero": "13"}, "b": {"nome": "Flávio Bolsonaro", "numero": "22"}},
         "primeiro_turno": {"a_pct": a1 / v1, "b_pct": b1 / v1, "base_dois": a1 / (a1 + b1)},
         "oficial": {**of, "a_pct": of["a"] / validos_of if validos_of else None},
@@ -338,7 +371,7 @@ def main():
                 "hora": dt.datetime.now().strftime("%H:%M:%S"),
                 "secoes_frac": leitura["oficial"]["secoes_frac"],
                 "frac": r["apurado"]["frac_eleitores"],
-                "prob": r["prob_a"],
+                "prob": r["prob_a"] if chance_pronta(r) else None,
                 "p05": r["projecao"]["p05"], "p50": r["projecao"]["p50"], "p95": r["projecao"]["p95"],
                 "ingenuo": r["apurado"]["fatia_a"],
             }
@@ -346,6 +379,11 @@ def main():
                 historico.append(ponto)
                 with open(arq_hist, "w") as f:
                     json.dump(historico, f)
+                if isinstance(fonte, FonteTSE):
+                    try:
+                        guardar_snapshot(fonte, leitura)
+                    except Exception as erro:
+                        print(f"  snapshot falhou: {erro!r}", flush=True)
             bu = None
             if not args.ensaio:
                 bu = carregar_bu_exterior() or (nuvem.get_json("exterior_bu") if nuvem else None)

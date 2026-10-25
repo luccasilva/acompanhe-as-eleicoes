@@ -69,19 +69,58 @@ ela cobrir mais eleitores que a totalização do TSE.
 Ensaio (2º turno inventado sobre o 1º turno real, para testar a página; nunca vai para o site):
 
 ```bash
-python3 poller.py --ensaio --minutos 10    # grava public/ensaio.json
-python3 servidor.py                         # e abra http://127.0.0.1:8766/?ensaio=1 (só local)
+python3 poller.py --ensaio --minutos 10                # grava public/ensaio.json
+python3 -m http.server 8765 --directory public         # e abra http://127.0.0.1:8765/?ensaio=1
 ```
+
+(O `servidor.py` entrega só a página e o `live.json`, de propósito; para o ensaio use o servidor acima.)
+
+## O modelo e a validação
+
+O modelo em uso é a versão 2 (`modelo.py`), feita a partir da revisão em
+`docs/revisao-metodologia.md`. A versão 1 fica congelada em `modelo_v1.py`, só para comparação.
+A página explica o método na seção "Sobre este painel"; em resumo, a v2 acrescenta:
+
+- um termo para o viés de composição dos municípios ainda parcialmente apurados, que é estimado
+  junto com o resto e não vai para a previsão do que falta;
+- uma covariável por eliminado com ≥ 1% dos válidos (em 2026: Cury, Renan Santos, Caiado);
+- heterogeneidade entre municípios reestimada a cada leitura, sem piso artificial;
+- desvios de região e UF, erro do que falta e prior do viés de composição calibrados em 2014 e
+  2018, com 2022 fora do ajuste;
+- a chance de vitória só é publicada com ≥ 10% do eleitorado apurado e dados de ≥ 20 estados.
+
+Para refazer a validação:
+
+```bash
+# dados abertos do TSE (votação por seção e detalhe por zona), para cada ano:
+#   https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_ANO_BR.zip
+#   https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_ANO.zip
+python3 preparar_eleicao.py 2022 votacao_secao_2022_BR.zip detalhe_votacao_munzona_2022.zip   # idem 2014 e 2018
+python3 backtest.py              # v1 × v2 nas três eleições, 9 ordens de chegada, 8 pontos cada
+python3 backtest.py --calibrar   # grade de parâmetros em 2014 e 2018
+```
+
+Resultado (192 pontos, sem o teste extremo): erro médio da projeção 0,50 p.p. (v1: 0,56), faixa
+de 90% contém o resultado em 90% dos pontos (v1: 86%), nenhuma chance ≥ 95% para quem perdeu
+(v1: 2). Em 2022, fora do ajuste, a v2 empata com a v1 (0,29 × 0,30 p.p.). O limite conhecido é a
+comparação por município: com as zonas mais adversas chegando primeiro dentro de cada cidade, a
+faixa de 90% contém o resultado em 54–62% dos pontos (v1: 46%).
+
+Cada execução do Actions guarda o estado por município de cada ciclo como artefato
+(`snapshots-<id>`): é a ordem real de chegada desta noite, para calibrar a próxima versão.
 
 ## Arquivos
 
 - `tse.py`: URLs e cliente HTTP dos JSONs públicos do TSE (ETag, limite de requisições).
 - `baixar_base.py`: baixa o 1º turno de cada município (`data/base_1t_2026.json`, já incluído).
-- `modelo.py`: projeção (virada + comparecimento + Monte Carlo com erro por UF e nacional).
+- `modelo.py`: projeção, versão 2 (virada + comparecimento + Monte Carlo com erro por UF e nacional).
+- `modelo_v1.py`: a versão 1, congelada, usada só no backtest para comparação.
 - `poller.py`: loop ao vivo (ou ensaio) que roda o modelo, grava `public/live.json` e envia ao Redis.
 - `redis_tcp.py`: cliente Redis mínimo (só biblioteca padrão) para a `REDIS_URL`.
 - `exterior_bu.py` / `bu.py`: leitura dos boletins de urna do exterior.
 - `public/index.html`: a página; lê `live.json` a cada 30s.
 - `api/live.js` / `vercel.json`: a função e a configuração da Vercel.
 - `servidor.py`: servidor local que entrega só a página e o JSON.
-- `backtest_2022.py` / `preparar_2022.py`: validação do modelo com o 1º → 2º turno de 2022.
+- `preparar_eleicao.py` / `backtest.py`: validação com os 2º turnos de 2014, 2018 e 2022.
+- `armazem.py`: acesso ao Redis (publicação e estado que sobrevive a um reinício).
+- `docs/revisao-metodologia.md`: a revisão crítica da versão 1 que guiou a versão 2.

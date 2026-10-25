@@ -62,3 +62,14 @@ jobs:
           python3 -u exterior_bu.py --duracao-min "$duracao" &
           python3 -u poller.py --duracao-min "$duracao" &
           wait
+
+      # o estado por município de cada ciclo é a ordem real de chegada de hoje: o dado que falta
+      # para o backtest da próxima versão do modelo (docs/revisao-metodologia.md, fase 1)
+      - name: Guardar o estado de cada ciclo
+        if: always() && steps.janela.outputs.encerrada != '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshots-${{ github.run_id }}
+          path: data/snapshots/
+          if-no-files-found: ignore
+          retention-days: 90

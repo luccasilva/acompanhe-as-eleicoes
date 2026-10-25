@@ -282,45 +282,64 @@ tr:hover td { background: var(--page); }
     <h3>Como ler o painel</h3>
     <dl>
       <dt>Chance de vitória</dt>
-      <dd>Em quantas de 10 mil simulações do restante da apuração o Lula termina com mais da metade dos votos válidos. Uma chance de 80% quer dizer que o Flávio vence em 1 de cada 5 simulações.</dd>
+      <dd>Em quantas de 10 mil simulações do restante da apuração o Lula termina com mais da metade dos votos válidos. Uma chance de 80% quer dizer que o Flávio vence em 1 de cada 5 simulações. Ela só aparece depois de 10% do eleitorado apurado e com dados de pelo menos 20 estados: antes disso há pouca informação, e um número na tela pareceria mais certo do que é.</dd>
       <dt>Projeção final</dt>
-      <dd>A estimativa do percentual final do Lula nos votos válidos, com a faixa em que o resultado cai em 90% das simulações.</dd>
+      <dd>A estimativa do percentual final do Lula nos votos válidos, com a faixa em que o resultado cai em 90% das simulações. Antes do mínimo de dados ela aparece como "preliminar". Nos testes com as eleições de 2014, 2018 e 2022, a faixa de 90% conteve o resultado final em 90% das vezes.</dd>
       <dt>Seções apuradas</dt>
       <dd>Quanto da contagem oficial já terminou e o placar parcial divulgado pelo TSE até agora.</dd>
       <dt>Virada sobre o 1º turno</dt>
-      <dd>Quanto a fatia do Lula entre os dois finalistas mudou desde o 1º turno, nos municípios já apurados. No 1º turno, Lula teve 48,99% dos votos dados aos dois. Com uma virada média acima de +1,0 ponto, ele passa de 50%.</dd>
+      <dd>Quanto a fatia do Lula entre os dois finalistas mudou desde o 1º turno, nos municípios já apurados. No 1º turno, Lula teve 48,99% dos votos dados aos dois. Com uma virada média acima de +1,0 ponto, ele passa de 50%. No começo da noite, os municípios apurados são sobretudo os menores e os que transmitem mais rápido, então esse número muda conforme cidades maiores entram. O sinal mais limpo é a virada dos municípios já 100% apurados, que aparece logo abaixo.</dd>
       <dt>O que falta apurar</dt>
       <dd>O percentual que o Lula precisaria fazer nos votos ainda não contados para terminar com 50%, ao lado do percentual que a projeção espera que ele faça nesses votos.</dd>
       <dt>Projeção × parcial e chance ao longo da noite</dt>
       <dd>Como a projeção, o placar parcial e a chance de vitória evoluíram conforme as seções foram apuradas.</dd>
       <dt>Brasileiros no exterior</dt>
-      <dd>O resultado de quem vota fora do Brasil, comparado com o 1º turno nas mesmas cidades, e um cenário: o resultado final se todos os municípios do Brasil tivessem a mesma virada do exterior.</dd>
+      <dd>O resultado de quem vota fora do Brasil, comparado com o 1º turno nas mesmas cidades. Como cada país fecha as urnas no próprio horário, esses votos aparecem antes da totalização oficial, lidos dos boletins de urna de cada seção. O cenário "se o Brasil virasse como o exterior" é só uma curiosidade: o exterior tem menos de 0,3% dos votos e um eleitorado diferente, e em 2022 o mesmo cálculo errou o resultado por 0,6 ponto.</dd>
       <dt>A virada, estado por estado</dt>
       <dd>No mapa, a cor mostra para que lado cada estado virou: vermelho para Lula, azul para Flávio. Na tabela, aparecem quanto de cada estado já foi apurado, a projeção e a chance de cada candidato vencer ali.</dd>
+      <dt>Avisos</dt>
+      <dd>Se o painel ficar atrás do placar oficial (porque ainda não leu todos os municípios que o TSE já totalizou), uma faixa amarela avisa no topo da página.</dd>
     </dl>
 
     <h3>Como a projeção é calculada</h3>
     <p>O ponto de partida é o 1º turno, de 4 de outubro. Cada município já tem um resultado de referência, então o painel mede, em cada município já apurado, quanto a fatia do Lula entre os dois finalistas mudou desde então:</p>
     <div class="formula">virada = fatia do Lula entre os dois no 2º turno − fatia do Lula entre os dois no 1º turno</div>
-    <p>Para os municípios que ainda não foram apurados, a virada é estimada a partir dos já apurados que se parecem com eles. Contam o estado e a região, a força do Lula no 1º turno, o peso dos candidatos que ficaram fora do 2º turno (Augusto Cury, Renan Santos, Ronaldo Caiado, Zema e outros, que somaram 7,8% dos votos válidos) e o porte da cidade. Enquanto um estado tem poucos votos apurados, a estimativa dele se apoia mais na região e no país. À medida que os votos do estado chegam, eles passam a pesar mais.</p>
+    <p>Para os municípios que ainda não foram apurados, a virada é estimada a partir dos já apurados que se parecem com eles. Contam o estado e a região, a força do Lula no 1º turno, o peso de cada candidato que ficou fora do 2º turno (Augusto Cury, Renan Santos e Ronaldo Caiado entram separados, porque seus eleitores estão em lugares diferentes e podem ir para lados diferentes) e o porte da cidade. Enquanto um estado tem poucos votos apurados, a estimativa dele se apoia mais na região e no país. À medida que os votos do estado chegam, eles passam a pesar mais.</p>
+    <p>Um cuidado extra vale para as cidades grandes que ainda estão no meio da contagem. O TSE divulga o total de cada município, sem dizer quais seções já entraram, e as primeiras seções de uma cidade podem votar diferente do resto dela. O modelo mede, junto com todo o resto, o quanto os municípios ainda incompletos estão destoando dos já fechados, e não deixa essa diferença contaminar a estimativa do que falta.</p>
     <p>O número de votos que ainda faltam vem do eleitorado de cada município e do comparecimento medido até agora, comparado com o do 1º turno.</p>
-    <p>Por fim, o painel simula 10 mil vezes o restante da apuração. Cada simulação varia as estimativas dentro da margem de incerteza de cada uma, inclusive a possibilidade de um estado inteiro, ou o país inteiro, virar mais ou menos do que o esperado. A chance de vitória e a faixa de 90% saem dessas simulações, e a faixa fica mais estreita à medida que mais urnas são apuradas.</p>
+    <p>Por fim, o painel simula 10 mil vezes o restante da apuração. Cada simulação varia as estimativas dentro da margem de incerteza de cada uma, inclusive a possibilidade de um estado inteiro, ou o país inteiro, virar mais ou menos do que o esperado. A chance de vitória e a faixa de 90% saem dessas simulações, e a faixa fica mais estreita à medida que mais urnas são apuradas. O tamanho dessas margens não foi escolhido a olho: ele foi ajustado reproduzindo as apurações de 2014 e 2018 e conferido na de 2022, que ficou de fora do ajuste.</p>
     <details>
       <summary>Detalhes técnicos</summary>
-      <p><strong>Dados.</strong> Os arquivos JSON públicos de resultados.tse.jus.br trazem presidente por município no 1º turno (eleição 6257) e no 2º turno (6258): são 5.571 municípios e 186 cidades no exterior, que entram como mais um estado. A cada 30 segundos, o sistema baixa o andamento dos 27 estados e do exterior, identifica os municípios com seções novas e baixa só esses.</p>
-      <p><strong>Modelo da virada.</strong> Para cada município <i>m</i> com pelo menos 20 votos apurados, <i>y<sub>m</sub></i> = <i>A</i><sub>2</sub>/(<i>A</i><sub>2</sub>+<i>B</i><sub>2</sub>) − <i>p<sub>m</sub></i>, em que <i>p<sub>m</sub></i> = <i>A</i><sub>1</sub>/(<i>A</i><sub>1</sub>+<i>B</i><sub>1</sub>) é a fatia do Lula entre os dois no 1º turno. O modelo misto linear é:</p>
-      <div class="formula"><i>y<sub>m</sub></i> = β<sub>0</sub> + β<sub>1</sub>(<i>p<sub>m</sub></i> − 0,5) + β<sub>2</sub><i>o<sub>m</sub></i> + β<sub>3</sub><i>o<sub>m</sub></i>(<i>p<sub>m</sub></i> − 0,5) + β<sub>4</sub> log<sub>10</sub>(eleitores) + β<sub>5</sub>·capital + <i>u</i><sub>região</sub> + <i>u</i><sub>UF</sub> + ε<sub>m</sub></div>
-      <p>Nessa equação, <i>o<sub>m</sub></i> é a fatia dos votos válidos do 1º turno que foi para os candidatos eliminados. O motivo dos termos em <i>o</i>: se uma fração <i>a</i> desses eleitores escolhe Lula, a fatia dele no 2º turno fica perto de <i>p</i>(1 − <i>o</i>) + <i>a</i>·<i>o</i>, ou seja, a virada fica perto de <i>o</i>(<i>a</i> − <i>p</i>). Os coeficientes β<sub>2</sub> e β<sub>3</sub> estimam, na prática, para onde foram os votos dos eliminados.</p>
-      <p>As priors são β<sub>0</sub> ~ N(0; 5 p.p.), β<sub>1…5</sub> ~ N(0; 0,10), <i>u</i><sub>região</sub> ~ N(0; 1,5 p.p.) e <i>u</i><sub>UF</sub> ~ N(0; 1,5 p.p.). A variância de cada observação é σ²<sub>mun</sub> + 0,25/<i>n<sub>m</sub></i> + σ²<sub>zona</sub>(1 − <i>f<sub>m</sub></i>), em que <i>n<sub>m</sub></i> é o número de votos apurados, <i>f<sub>m</sub></i> é a fração do eleitorado já apurada e σ<sub>zona</sub> = 2 p.p. A heterogeneidade σ<sub>mun</sub> é reestimada pelos resíduos a cada leitura. Com as variâncias fixas, a posterior é gaussiana e sai das equações de modelo misto de Henderson, com média e matriz de covariância completas.</p>
-      <p><strong>Municípios parcialmente apurados.</strong> A virada do restante é λ<i>y<sub>m</sub></i> + (1 − λ)<i>ŷ<sub>m</sub></i>, com λ = σ²<sub>mun</sub> / (σ²<sub>mun</sub> + 0,25/<i>n<sub>m</sub></i> + σ²<sub>zona</sub>(1 − <i>f<sub>m</sub></i>)). É o melhor preditor linear não viesado (BLUP).</p>
-      <p><strong>Votos que faltam.</strong> A razão <i>k</i> = válidos no 2º turno ÷ (eleitores apurados × válidos por eleitor no 1º turno) é encolhida em cascata: <i>k</i><sub>mun</sub> = (<i>V</i> + κ<i>k</i><sub>UF</sub>)/(<i>E</i> + κ), em que <i>V</i> são os válidos apurados no município, <i>E</i> são os válidos que o 1º turno esperaria nesse mesmo trecho apurado e κ = 5 mil votos esperados. Na UF e na região, κ = 200 mil. Votos que faltam = eleitores não apurados × válidos por eleitor no 1º turno × <i>k</i><sub>mun</sub>.</p>
+      <p><strong>Dados.</strong> Os arquivos JSON públicos de resultados.tse.jus.br trazem presidente por município no 1º turno (eleição 6257) e no 2º turno (6258): são 5.571 municípios e 186 cidades no exterior, que entram como mais um estado. A cada 30 segundos, o sistema baixa o andamento dos 27 estados e do exterior, identifica os municípios com seções novas e baixa só esses. O código roda no GitHub Actions e publica num Redis lido pelo site.</p>
+      <p><strong>Modelo da virada (versão 2).</strong> Para cada município <i>m</i> com pelo menos 20 votos apurados, <i>y<sub>m</sub></i> = <i>A</i><sub>2</sub>/(<i>A</i><sub>2</sub>+<i>B</i><sub>2</sub>) − <i>p<sub>m</sub></i>, em que <i>p<sub>m</sub></i> = <i>A</i><sub>1</sub>/(<i>A</i><sub>1</sub>+<i>B</i><sub>1</sub>) é a fatia do Lula entre os dois no 1º turno. O modelo misto linear é:</p>
+      <div class="formula"><i>y<sub>m</sub></i> = β<sub>0</sub> + β<sub>1</sub>(<i>p<sub>m</sub></i> − 0,5) + Σ<sub><i>k</i></sub> [γ<sub><i>k</i></sub><i>o<sub>km</sub></i> + δ<sub><i>k</i></sub><i>o<sub>km</sub></i>(<i>p<sub>m</sub></i> − 0,5)] + β<sub>4</sub> log<sub>10</sub>(eleitores) + β<sub>5</sub>·capital + π·(1 − <i>f<sub>m</sub></i>)·parcial<sub><i>m</i></sub> + <i>u</i><sub>região</sub> + <i>u</i><sub>UF</sub> + ε<sub>m</sub></div>
+      <p><i>o<sub>km</sub></i> é a fatia dos válidos do 1º turno de cada eliminado <i>k</i> com pelo menos 1% no país (Cury, Renan Santos, Caiado) e de um "resto" com os demais. O motivo desses termos: se uma fração <i>a<sub>k</sub></i> dos eleitores de <i>k</i> escolhe Lula, a virada fica perto de Σ<sub><i>k</i></sub> <i>o<sub>k</sub></i>(<i>a<sub>k</sub></i> − <i>p</i>), linear em <i>o<sub>k</sub></i> e <i>o<sub>k</sub>p</i>. Os coeficientes γ e δ estimam, na prática, para onde foram os votos de cada eliminado.</p>
+      <p>O termo π captura o viés de composição: parcial<sub><i>m</i></sub> = 1 nos municípios ainda incompletos e <i>f<sub>m</sub></i> é a fração do eleitorado já apurada. π entra só na observação, nunca na previsão do que falta, então um desvio comum dos pedaços já apurados não se espalha para as outras cidades.</p>
+      <p>As priors são β<sub>0</sub> ~ N(0; 5 p.p.), coeficientes de voto ~ N(0; 0,10), porte e capital ~ N(0; 0,03), π ~ N(0; 0,75 p.p.), <i>u</i><sub>região</sub> ~ N(0; 0,8 p.p.) e <i>u</i><sub>UF</sub> ~ N(0; 0,8 p.p.). A variância de cada observação é σ²<sub>mun</sub> + 0,25/<i>n<sub>m</sub></i> + σ²<sub>zona</sub>(1 − <i>f<sub>m</sub></i>), com <i>n<sub>m</sub></i> votos apurados e σ<sub>zona</sub> = 2 p.p. A heterogeneidade σ²<sub>mun</sub> = <i>s</i>²<sub>∞</sub> + <i>c</i>/eleitores é reestimada a cada leitura pelos resíduos (nas eleições completas: <i>s</i><sub>∞</sub> = 2,2 p.p. em 2014, 1,4 em 2018 e 0,8 em 2022). Com as variâncias fixas, a posterior é gaussiana e sai das equações de modelo misto de Henderson, com média e matriz de covariância completas.</p>
+      <p><strong>Municípios parcialmente apurados.</strong> A virada do restante é λ(<i>y<sub>m</sub></i> − π̂(1 − <i>f<sub>m</sub></i>)) + (1 − λ)<i>ŷ<sub>m</sub></i>, com λ = σ²<sub>mun</sub> / (σ²<sub>mun</sub> + 0,25/<i>n<sub>m</sub></i> + σ²<sub>zona</sub>(1 − <i>f<sub>m</sub></i>)). É o melhor preditor linear não viesado (BLUP), já descontado o viés de composição estimado.</p>
+      <p><strong>Votos que faltam.</strong> A razão <i>k</i> = válidos no 2º turno ÷ (eleitores apurados × válidos por eleitor no 1º turno) é encolhida em cascata: <i>k</i><sub>mun</sub> = (<i>V</i> + κ<i>k</i><sub>UF</sub>)/(<i>E</i> + κ), em que <i>V</i> são os válidos apurados no município, <i>E</i> são os válidos que o 1º turno esperaria nesse mesmo trecho apurado e κ = 5 mil votos esperados. Na UF e na região, κ = 200 mil.</p>
       <p><strong>Simulação.</strong> São 10 mil sorteios de θ ~ N(θ̂, Σ), somados a três componentes:</p>
       <ul>
         <li>ruído municipal agregado por UF;</li>
-        <li>um erro do que falta, de N(0; 1 p.p.) por UF mais N(0; 1 p.p.) nacional;</li>
-        <li>um choque de comparecimento de N(0; 3% × √(1 − <i>w</i><sub>UF</sub>)) por UF, em que <i>w</i><sub>UF</sub> mede quanto da UF já foi observado, mais N(0; 2% × (1 − fração apurada)) nacional.</li>
+        <li>um erro do que falta, de N(0; 1,2 p.p.) por UF mais N(0; 1,2 p.p.) nacional;</li>
+        <li>um choque de comparecimento de N(0; 3% × √(1 − <i>w</i><sub>UF</sub>)) por UF, em que <i>w</i><sub>UF</sub> mede quanto da UF já foi observado, mais N(0; 2% × (1 − fração do eleitorado apurada)) nacional.</li>
       </ul>
-      <p>A probabilidade é a fração de sorteios com Lula acima de 50% dos válidos.</p>
+      <p><strong>Calibração e teste.</strong> A apuração de 2014, 2018 e 2022 foi reproduzida seção por seção, com os dados abertos do TSE, em 8 ordens de chegada: Sul e Sudeste primeiro, Nordeste primeiro, cidades pequenas primeiro, aleatória, duas reconstruções da ordem real de cada eleição a partir da hora em que cada zona terminou, e duas adversas em que, dentro de cada cidade, as zonas mais contrárias (ou mais favoráveis) ao candidato do PT chegam primeiro. Cada uma foi medida em 8 pontos da contagem, de 2% a 90%. Os desvios de região e UF, o erro do que falta e a prior de π foram escolhidos numa grade em 2014 e 2018; 2022 ficou de fora para servir de teste.</p>
+      <div class="tabela-scroll">
+        <table class="tabela-metodo">
+          <thead><tr><th>Nas 3 eleições, 192 pontos</th><th>Versão 1</th><th>Versão 2</th></tr></thead>
+          <tbody>
+            <tr><td>Erro médio da projeção</td><td>0,56 p.p.</td><td>0,50 p.p.</td></tr>
+            <tr><td>Erro médio do parcial bruto</td><td>4,0 p.p.</td><td>4,0 p.p.</td></tr>
+            <tr><td>Faixa de 90% contém o resultado</td><td>86%</td><td>90%</td></tr>
+            <tr><td>Faixa de 50% contém o resultado</td><td>68%</td><td>74%</td></tr>
+            <tr><td>95% ou mais de chance para quem perdeu</td><td>2 vezes</td><td>nenhuma</td></tr>
+            <tr><td>2022 (fora do ajuste): erro médio</td><td>0,30 p.p.</td><td>0,29 p.p.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Num teste extremo, à parte (cidades grandes primeiro e, nelas, as zonas mais contrárias ao PT primeiro), a versão 2 ainda deu 95% ou mais para quem perdeu com 2% e 5% apurado, em 2014. Com 10% apurado, não. Por isso a chance de vitória só é exibida a partir de 10% do eleitorado e 20 estados.</p>
+      <p><strong>Limites conhecidos.</strong> A comparação é por município, não por seção: o termo π reduz, mas não elimina, o erro quando as primeiras seções de uma cidade grande votam diferente do resto. Nas ordens adversas dentro das cidades, a faixa de 90% ainda contém o resultado só entre 54% e 62% das vezes (eram 46% na versão 1). São três eleições, todas presidenciais, com o PT num dos lados. O estado de cada município em cada ciclo desta noite fica guardado para medir a ordem real de chegada e calibrar a próxima versão.</p>
     </details>
   </section>
 </main>
@@ -394,10 +413,21 @@ function render() {
   $("nota-modo").style.display = d.modo === "ensaio" ? "" : "none";
 
   const temDado = m.apurado.frac_eleitores > 0;
+  const pronta = d.chance ? d.chance.pronta : temDado;
   $("leg-cand").innerHTML = `<span><i class="chave" style="background:var(--a)"></i>${A}</span><span><i class="chave" style="background:var(--b)"></i>${B}</span>`;
+  const cons = d.consistencia;
+  if (cons && cons.validos_oficiais > 0 && cons.diferenca > 0.005) {
+    $("alerta").textContent = `O painel ainda não leu todos os municípios que o TSE já totalizou (faltam ${fmt(cons.diferenca, 1)} dos votos válidos). A projeção pode estar alguns ciclos atrás do placar oficial.`;
+    $("alerta").style.display = "block";
+  }
   if (!temDado) {
     $("prob").textContent = "—";
     $("prob-contra").textContent = "Aguardando os primeiros boletins de urna (as seções fecham às 17h de Brasília).";
+    $("split").innerHTML = "";
+  } else if (!pronta) {
+    $("prob").textContent = "—";
+    $("prob-contra").textContent = `A chance de vitória aparece com ${fmt(d.chance.frac, 0)} do eleitorado apurado e dados de ${d.chance.ufs} estados. ` +
+      `Agora: ${fmt(m.apurado.frac_eleitores, 1)} e ${m.apurado.ufs_com_dado} estados.`;
     $("split").innerHTML = "";
   } else {
     $("prob").textContent = fmt(m.prob_a, m.prob_a > .995 || m.prob_a < .005 ? 1 : 0);
@@ -407,13 +437,17 @@ function render() {
 
   const pr = m.projecao;
   $("t-proj").textContent = temDado ? fmt(pr.p50, 2) : "—";
-  $("t-proj-d").textContent = temDado ? `90%: de ${fmt(pr.p05)} a ${fmt(pr.p95)} · ${B} ${fmt(1 - pr.p50, 2)}` : "sem dados ainda";
+  $("t-proj-d").textContent = temDado
+    ? `${pronta ? "" : "preliminar · "}faixa de 90%: de ${fmt(pr.p05)} a ${fmt(pr.p95)} · ${B} ${fmt(1 - pr.p50, 2)}`
+    : "sem dados ainda";
   $("t-apur").textContent = fmt(d.oficial.secoes_frac, 1);
   $("t-apur-d").textContent = d.oficial.a + d.oficial.b > 0
     ? `parcial: ${A} ${fmt(d.oficial.a_pct, 2)} × ${B} ${fmt(1 - d.oficial.a_pct, 2)}`
     : `TSE: ${d.oficial.gerado || "—"}`;
   $("t-virada").textContent = temDado ? fmtPP(m.virada_observada, 2) : "—";
-  $("t-virada-d").textContent = `precisa de ${fmtPP(0.5 - d.primeiro_turno.base_dois, 2)}` +
+  $("t-virada-d").textContent = (temDado ? "nos municípios já apurados (no começo da noite, os menores e mais rápidos)" +
+      (m.virada_fechados != null ? ` · nos já 100% apurados: ${fmtPP(m.virada_fechados, 2)}` : "") + " · " : "") +
+    `precisa de ${fmtPP(0.5 - d.primeiro_turno.base_dois, 2)}` +
     (m.comparecimento_razao ? ` · comparecimento ${fmt(m.comparecimento_razao, 1)} do 1º turno` : "");
   const resta = temDado && m.precisa_do_que_falta != null;
   $("t-falta").textContent = resta ? fmt(m.precisa_do_que_falta, 1) : "—";
@@ -452,9 +486,10 @@ function exterior(ex, A, B) {
     ? `nas mesmas cidades, contra o 1º turno` + (t2.comparecimento_razao ? ` · comparecimento ${fmt(t2.comparecimento_razao)} do 1º turno` : "")
     : "fatia do Lula no 2º turno menos a do 1º turno, nas mesmas cidades";
   $("ex-cen").textContent = ex.cenario_brasil != null ? `${A} ${fmt(ex.cenario_brasil, 2)}` : "—";
-  $("ex-cen-d").textContent = ex.cenario_brasil != null
+  $("ex-cen-d").textContent = (ex.cenario_brasil != null
     ? `a virada do exterior aplicada a todos os municípios do Brasil · ${B} ${fmt(1 - ex.cenario_brasil, 2)}`
-    : "a virada do exterior aplicada a todos os municípios do Brasil";
+    : "a virada do exterior aplicada a todos os municípios do Brasil") +
+    ". É só um cenário: em 2022, este mesmo cálculo daria 51,5% para Lula, e o resultado foi 50,9%.";
   const cidades = ex.cidades.slice()
     .sort((x, y) => (y.fatia_a_apurada != null) - (x.fatia_a_apurada != null) || y.eleitores - x.eleitores)
     .slice(0, 12);
@@ -546,7 +581,7 @@ function graficoProjecao(hist) {
 function graficoProb(hist) {
   const el = $("g-prob");
   const pts = hist.filter(p => p.prob != null);
-  if (pts.length < 1) { el.innerHTML = `<div class="vazio">O gráfico aparece com os primeiros votos apurados.</div>`; return; }
+  if (pts.length < 1) { el.innerHTML = `<div class="vazio">O gráfico aparece quando a chance de vitória passar a ser calculada (10% do eleitorado apurado e dados de 20 estados).</div>`; return; }
   const fx = p => p.secoes_frac;
   const g = baseGrafico(el, 260, pts, 0, 1, v => Math.round(v * 100) + "%", .5);
   const area = caminho(pts, g.x, g.y, fx, p => p.prob) + `L${g.x(fx(pts[pts.length - 1]))},${g.y(0)}L${g.x(fx(pts[0]))},${g.y(0)}Z`;
