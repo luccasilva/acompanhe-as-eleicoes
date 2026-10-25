@@ -192,6 +192,7 @@ tr:hover td { background: var(--page); }
       <h1>Apuração do 2º turno</h1>
     </div>
     <span id="modo" class="pill">—</span>
+    <span id="online" class="pill" hidden></span>
     <span class="status" id="status">carregando…</span>
   </div>
 </header>
@@ -645,7 +646,30 @@ document.querySelectorAll("th[data-k]").forEach(th => th.addEventListener("click
   if (dados) tabela(dados.modelo.uf);
 }));
 let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => dados && render(), 150); });
+// ---------- quantas pessoas estão com a página aberta ----------
+// Um id aleatório só desta aba (sem cookie, sem dado pessoal); ela sai da conta alguns minutos
+// depois de fechada. O intervalo entre sinais vem do servidor e cresce com a audiência.
+const idAba = window.crypto && crypto.randomUUID ? crypto.randomUUID() : null;
+let falhasOnline = 0;
+async function sinalOnline() {
+  if (!idAba || params.has("ensaio")) return;
+  let espera = 120;
+  try {
+    const r = await fetch("/api/online?id=" + idAba, { method: "POST", keepalive: true });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const o = await r.json();
+    $("online").textContent = o.online === 1 ? "1 pessoa acompanhando agora" : fmtN(o.online) + " pessoas acompanhando agora";
+    $("online").hidden = false;
+    espera = o.intervalo || 60;
+    falhasOnline = 0;
+  } catch (e) {
+    if (++falhasOnline >= 3) { $("online").hidden = true; return; } // desiste sem atrapalhar o resto
+  }
+  setTimeout(sinalOnline, espera * 1000);
+}
+
 carregar();
+sinalOnline();
 </script>
 </body>
 </html>
