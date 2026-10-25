@@ -8,76 +8,111 @@
 <meta property="og:title" content="Apuração ao vivo · 2º turno 2026">
 <meta property="og:description" content="Placar parcial, projeção do resultado final e chance de vitória, atualizados a cada 30 segundos com dados do TSE.">
 <meta property="og:type" content="website">
+<meta name="theme-color" content="#c8102e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23c8102e' d='M12 1.55 14.47 9.15H22.46L15.99 13.85 18.47 21.45 12 16.75 5.53 21.45 8.01 13.85 1.54 9.15H9.53Z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&display=swap">
 <style>
 :root {
   color-scheme: light;
-  --page: #f9f9f7;
-  --surface: #fcfcfb;
-  --ink: #0b0b0b;
-  --ink-2: #52514e;
-  --muted: #898781;
-  --grid: #e1e0d9;
-  --axis: #c3c2b7;
-  --border: #e1e0d9;
-  --a: #e34948;          /* Lula */
+  --page: #faf6f4;
+  --surface: #ffffff;
+  --ink: #1c0f0f;
+  --ink-2: #5b4a48;
+  --muted: #8d7c79;
+  --grid: #efe4e1;
+  --axis: #d9c8c4;
+  --border: #ecdfdb;
+  --brand: #c8102e;      /* vermelho da faixa do topo e do destaque */
+  --brand-deep: #990b22;
+  --brand-text: #b10e28; /* vermelho para texto sobre fundo claro */
+  --on-brand: #ffffff;
+  --a: #d9202b;          /* Lula */
   --b: #2a78d6;          /* Flávio */
-  --a-wash: rgba(227, 73, 72, .12);
-  --div-mid: #f0efec;
-  --div-a: #c93a39;
+  --a-wash: rgba(217, 32, 43, .12);
+  --div-mid: #f3ebe8;
+  --div-a: #c8102e;
   --div-b: #256abf;
   --warn-bg: #fff4dc;
   --warn-ink: #6b4a00;
+  --display: "Barlow Condensed", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) {
     color-scheme: dark;
-    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
-    --grid: #2c2c2a; --axis: #383835; --border: #2c2c2a;
-    --a: #e66767; --b: #3987e5; --a-wash: rgba(230, 103, 103, .16);
-    --div-mid: #383835; --div-a: #e66767; --div-b: #3987e5;
+    --page: #120809; --surface: #1d0f10; --ink: #f6ecea; --ink-2: #d2bfbc; --muted: #9a8683;
+    --grid: #321f1f; --axis: #4a2f2e; --border: #352221;
+    --brand: #b10e24; --brand-deep: #7e0a1a; --brand-text: #ff7275; --on-brand: #ffffff;
+    --a: #f0565b; --b: #3987e5; --a-wash: rgba(240, 86, 91, .18);
+    --div-mid: #3a2a29; --div-a: #e8474d; --div-b: #3987e5;
     --warn-bg: #3a2d10; --warn-ink: #f5d48a;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
-  --grid: #2c2c2a; --axis: #383835; --border: #2c2c2a;
-  --a: #e66767; --b: #3987e5; --a-wash: rgba(230, 103, 103, .16);
-  --div-mid: #383835; --div-a: #e66767; --div-b: #3987e5;
+  --page: #120809; --surface: #1d0f10; --ink: #f6ecea; --ink-2: #d2bfbc; --muted: #9a8683;
+  --grid: #321f1f; --axis: #4a2f2e; --border: #352221;
+  --brand: #b10e24; --brand-deep: #7e0a1a; --brand-text: #ff7275; --on-brand: #ffffff;
+  --a: #f0565b; --b: #3987e5; --a-wash: rgba(240, 86, 91, .18);
+  --div-mid: #3a2a29; --div-a: #e8474d; --div-b: #3987e5;
   --warn-bg: #3a2d10; --warn-ink: #f5d48a;
 }
 * { box-sizing: border-box; }
+::selection { background: var(--brand); color: var(--on-brand); }
 body {
   margin: 0; background: var(--page); color: var(--ink);
   font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-variant-numeric: tabular-nums;
 }
-main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 64px; }
-header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin-bottom: 20px; }
-h1 { font-size: 22px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
-h2 { font-size: 15px; margin: 0 0 2px; font-weight: 600; }
+main { max-width: 1120px; margin: 0 auto; padding: 20px 16px 64px; }
+.estrela {
+  display: inline-block; background: currentColor; aspect-ratio: 1.05;
+  clip-path: polygon(50% 0, 61.8% 38.2%, 100% 38.2%, 69.1% 61.8%, 80.9% 100%, 50% 76.4%, 19.1% 100%, 30.9% 61.8%, 0 38.2%, 38.2% 38.2%);
+}
+.topo { position: relative; overflow: hidden; background: var(--brand); color: var(--on-brand); border-bottom: 4px solid var(--brand-deep); }
+.topo-in { position: relative; max-width: 1120px; margin: 0 auto; padding: 20px 16px 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.topo .marca { width: 44px; flex: none; }
+.topo .fundo { position: absolute; width: 300px; right: max(-60px, calc(50% - 620px)); top: -80px; opacity: .1; pointer-events: none; }
+.topo .sobre { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+h1 { font: 800 34px/1 var(--display); margin: 2px 0 0; text-transform: uppercase; letter-spacing: .01em; }
+h2 { font: 700 19px/1.15 var(--display); margin: 0 0 4px; text-transform: uppercase; letter-spacing: .02em; display: flex; align-items: center; gap: 8px; }
+h2 .estrela { width: 15px; flex: none; color: var(--brand); }
 .sub { color: var(--ink-2); font-size: 13px; margin: 0 0 12px; }
-.pill { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--ink-2); }
-.pill.vivo::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--a); margin-right: 6px; vertical-align: 1px; }
+.pill { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .55); color: var(--on-brand); }
+.pill.vivo::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--on-brand); margin-right: 6px; vertical-align: 1px; animation: pulso 1.6s ease-out infinite; }
+@keyframes pulso { from { box-shadow: 0 0 0 0 rgba(255, 255, 255, .7); } to { box-shadow: 0 0 0 7px rgba(255, 255, 255, 0); } }
+@media (prefers-reduced-motion: reduce) { .pill.vivo::before { animation: none; } }
 .pill.ensaio { background: var(--warn-bg); color: var(--warn-ink); border-color: transparent; }
-.status { color: var(--muted); font-size: 13px; margin-left: auto; }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.status { color: rgba(255, 255, 255, .85); font-size: 13px; margin-left: auto; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
 .alerta { background: var(--warn-bg); color: var(--warn-ink); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 16px; display: none; }
 
 .hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; margin-bottom: 16px; }
 .hero .rotulo { color: var(--ink-2); font-size: 13px; }
 .hero .numero { font-size: 56px; font-weight: 650; line-height: 1.05; letter-spacing: -.02em; }
 .hero .contra { color: var(--ink-2); font-size: 14px; margin-top: 4px; }
+.card.destaque { position: relative; overflow: hidden; background: var(--brand); color: var(--on-brand); border-color: transparent; padding: 20px; }
+.destaque > * { position: relative; }
+.destaque .fundo { position: absolute; width: 230px; right: -40px; bottom: -56px; opacity: .1; }
+.destaque .rotulo { color: rgba(255, 255, 255, .9); font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.destaque .numero { font: 800 96px/1 var(--display); letter-spacing: 0; margin-top: 8px; }
+.destaque .contra { color: rgba(255, 255, 255, .9); }
 .split { display: flex; height: 10px; margin-top: 16px; gap: 2px; }
 .split div { border-radius: 4px; }
+.destaque .split { height: 16px; padding: 3px; border-radius: 7px; background: #fff; }
+.destaque .split:empty { display: none; }
 .legenda { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); margin-top: 8px; }
+.destaque .legenda { color: rgba(255, 255, 255, .92); }
 .chave { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.destaque .chave { box-shadow: 0 0 0 1.5px #fff; }
 .chave.linha { height: 2px; width: 14px; border-radius: 1px; vertical-align: 3px; }
 .chave.faixa { background: var(--a-wash); border: 0; }
 
 .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.tile .rotulo { font-size: 12px; color: var(--ink-2); }
-.tile .valor { font-size: 22px; font-weight: 600; margin-top: 2px; }
+.tile { box-shadow: inset 0 3px 0 var(--brand); }
+.tile .rotulo, .mini-tile .rotulo { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--brand-text); }
+.tile .valor { font: 700 32px/1.1 var(--display); margin-top: 4px; }
 .tile .det { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
 .grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-bottom: 16px; }
@@ -104,22 +139,22 @@ h2 { font-size: 15px; margin: 0 0 2px; font-weight: 600; }
 .escala-r { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 4px; }
 
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { text-align: right; font-weight: 500; color: var(--ink-2); font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--axis); cursor: pointer; user-select: none; white-space: nowrap; }
+th { text-align: right; font-weight: 600; color: var(--ink-2); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; padding: 6px 8px; border-bottom: 2px solid var(--brand); cursor: pointer; user-select: none; white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; }
 td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
 tr:hover td { background: var(--page); }
 .tabela-scroll { overflow-x: auto; }
 .mini { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 .metodo { font-size: 14px; line-height: 1.6; }
-.metodo h3 { font-size: 14px; font-weight: 600; margin: 22px 0 6px; }
+.metodo h3 { font: 700 17px/1.2 var(--display); text-transform: uppercase; letter-spacing: .02em; color: var(--brand-text); margin: 24px 0 6px; }
 .metodo p, .metodo li { max-width: 74ch; margin: 0 0 10px; }
 .metodo ul { padding-left: 20px; margin: 0 0 10px; }
 .metodo .formula {
-  font-size: 13px; background: var(--page); border: 1px solid var(--border); border-radius: 8px;
+  font-size: 13px; background: var(--page); border: 1px solid var(--border); border-left: 3px solid var(--brand); border-radius: 8px;
   padding: 10px 12px; margin: 8px 0 14px; overflow-x: auto; white-space: nowrap;
 }
 .metodo details { margin-top: 22px; border-top: 1px solid var(--border); padding-top: 14px; }
-.metodo summary { cursor: pointer; font-weight: 600; margin-bottom: 10px; }
+.metodo summary { cursor: pointer; font-weight: 600; color: var(--brand-text); margin-bottom: 10px; }
 .metodo details p, .metodo details li { color: var(--ink-2); font-size: 13px; }
 .metodo .tabela-metodo { max-width: 520px; margin: 4px 0 12px; }
 .metodo .tabela-metodo th, .metodo .tabela-metodo td { cursor: default; }
@@ -131,29 +166,38 @@ tr:hover td { background: var(--page); }
 .ext-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 20px; align-items: start; }
 .ext-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .mini-tile { background: var(--page); border-radius: 8px; padding: 12px; }
-.mini-tile .rotulo { font-size: 12px; color: var(--ink-2); }
-.mini-tile .valor { font-size: 20px; font-weight: 600; margin-top: 2px; }
+.mini-tile .valor { font: 700 26px/1.1 var(--display); margin-top: 4px; }
 .mini-tile .det { font-size: 12px; color: var(--muted); margin-top: 2px; }
 @media (max-width: 860px) { .ext-wrap { grid-template-columns: minmax(0, 1fr); } }
 
 @media (max-width: 860px) {
   .hero, .grade, .mapa-wrap { grid-template-columns: minmax(0, 1fr); }
   .hero .numero { font-size: 48px; }
+  .destaque .numero { font-size: 76px; }
+  h1 { font-size: 28px; }
   .mapa { max-width: 340px; }
 }
 </style>
 </head>
 <body>
-<main>
-  <header>
-    <h1>Apuração do 2º turno · Presidente 2026</h1>
+<header class="topo">
+  <i class="estrela fundo" aria-hidden="true"></i>
+  <div class="topo-in">
+    <i class="estrela marca" aria-hidden="true"></i>
+    <div>
+      <div class="sobre">Eleições 2026 · Presidente da República</div>
+      <h1>Apuração do 2º turno</h1>
+    </div>
     <span id="modo" class="pill">—</span>
     <span class="status" id="status">carregando…</span>
-  </header>
+  </div>
+</header>
+<main>
   <div class="alerta" id="alerta"></div>
 
   <section class="hero">
-    <div class="card">
+    <div class="card destaque">
+      <i class="estrela fundo" aria-hidden="true"></i>
       <div class="rotulo">Chance de vitória do <span data-a>Lula</span></div>
       <div class="numero" id="prob">—</div>
       <div class="contra" id="prob-contra"></div>
@@ -170,7 +214,7 @@ tr:hover td { background: var(--page); }
 
   <section class="grade">
     <div class="card">
-      <h2>Projeção × parcial</h2>
+      <h2><i class="estrela" aria-hidden="true"></i>Projeção × parcial</h2>
       <p class="sub">% do <span data-a>Lula</span> nos votos válidos, por % de seções apuradas</p>
       <div class="grafico" id="g-proj"></div>
       <div class="legenda">
@@ -180,14 +224,14 @@ tr:hover td { background: var(--page); }
       </div>
     </div>
     <div class="card">
-      <h2>Chance de vitória ao longo da noite</h2>
+      <h2><i class="estrela" aria-hidden="true"></i>Chance de vitória ao longo da noite</h2>
       <p class="sub">Probabilidade do <span data-a>Lula</span> passar de 50% dos válidos</p>
       <div class="grafico" id="g-prob"></div>
     </div>
   </section>
 
   <section class="card" id="exterior" style="margin-bottom:16px">
-    <h2>Brasileiros no exterior</h2>
+    <h2><i class="estrela" aria-hidden="true"></i>Brasileiros no exterior</h2>
     <p class="sub">Votos de brasileiros que moram fora do país, em 186 cidades. Entram na conta como qualquer outro voto e somam cerca de 0,3% dos votos válidos. <span id="ex-fonte"></span></p>
     <div class="ext-wrap">
       <div class="ext-tiles">
@@ -207,7 +251,7 @@ tr:hover td { background: var(--page); }
   </section>
 
   <section class="card" style="margin-bottom:16px">
-    <h2>A virada, estado por estado</h2>
+    <h2><i class="estrela" aria-hidden="true"></i>A virada, estado por estado</h2>
     <p class="sub">Fatia do <span data-a>Lula</span> entre os dois no parcial do 2º turno menos a fatia dele no 1º turno, nos mesmos municípios. Comparecimento: eleitores que votaram em relação ao 1º turno.</p>
     <div class="mapa-wrap">
       <div>
@@ -230,7 +274,7 @@ tr:hover td { background: var(--page); }
   </section>
 
   <section class="card metodo" id="metodologia">
-    <h2>Sobre este painel</h2>
+    <h2><i class="estrela" aria-hidden="true"></i>Sobre este painel</h2>
     <p>Este painel acompanha ao vivo a apuração do 2º turno da eleição para presidente de 2026, entre Lula (PT) e Flávio Bolsonaro (PL). Os números vêm dos arquivos públicos de resultados do Tribunal Superior Eleitoral (TSE) e são atualizados a cada 30 segundos. Além do placar parcial, o painel calcula uma projeção de como a apuração deve terminar.</p>
     <p>A projeção é independente e não oficial. O resultado oficial é sempre o divulgado pelo TSE.</p>
     <p id="nota-modo"></p>
