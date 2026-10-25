@@ -18,6 +18,7 @@ import urllib.error
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 
+import armazem
 import bu
 import tse
 
@@ -53,7 +54,7 @@ def ler_secao(cliente, mun, zona, secao):
             "comparec": r["comparec"], "aptos": r["aptos"], "recebido": f"{h.get('dr', '')} {h.get('hr', '')}"}
 
 
-def gravar(lidos, total_secoes):
+def gravar(lidos, total_secoes, nuvem=None):
     cidades = defaultdict(lambda: {"a": 0, "b": 0, "comparec": 0, "aptos": 0, "secoes": 0})
     for r in lidos.values():
         c = cidades[r["mun"]]
@@ -67,10 +68,17 @@ def gravar(lidos, total_secoes):
         "cidades": cidades,
         "secoes": lidos,
     }
+    corpo = json.dumps(saida, ensure_ascii=False).encode()
+    os.makedirs(os.path.dirname(SAIDA), exist_ok=True)
     tmp = SAIDA + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(saida, f, ensure_ascii=False)
+    with open(tmp, "wb") as f:
+        f.write(corpo)
     os.replace(tmp, SAIDA)
+    if nuvem:  # para a próxima execução (e o poller) retomarem daqui
+        try:
+            nuvem.set("exterior_bu", corpo)
+        except Exception as erro:
+            print(f"  falhou ao salvar no Redis: {erro!r}", flush=True)
     a = sum(c["a"] for c in cidades.values())
     b = sum(c["b"] for c in cidades.values())
     return a, b
@@ -79,17 +87,24 @@ def gravar(lidos, total_secoes):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--intervalo", type=float, default=60)
+    ap.add_argument("--duracao-min", type=float, default=None, help="encerra depois de N minutos")
     args = ap.parse_args()
 
-    cliente = tse.Cliente(max_por_segundo=30)
+    armazem.carregar_env(os.path.join(AQUI, ".env.local"))
+    nuvem = armazem.Armazem()
+    nuvem = nuvem if nuvem.ativo else None
+    cliente = tse.Cliente(max_por_segundo=25)  # somado ao poller (60/s), fica abaixo do limite de 100/s do TSE
     cfg, _ = cliente.get(tse.url_secoes(tse.PLEITO_2T, UF))
     secoes = [(m["cd"], z["cd"], s["ns"]) for abr in cfg["abr"] for m in abr["mu"] for z in m["zon"] for s in z["sec"]]
-    lidos = {}
-    if os.path.exists(SAIDA):
+    anterior = nuvem.get_json("exterior_bu") if nuvem else None
+    if anterior is None and os.path.exists(SAIDA):
         with open(SAIDA) as f:
-            lidos = json.load(f).get("secoes", {})
+            anterior = json.load(f)
+    lidos = (anterior or {}).get("secoes", {})
+    print(f"retomando com {len(lidos)} seções já lidas", flush=True)
 
-    while True:
+    fim = time.monotonic() + args.duracao_min * 60 if args.duracao_min else None
+    while fim is None or time.monotonic() < fim:
         inicio = time.monotonic()
         pendentes = [s for s in secoes if chave(*s) not in lidos]
         erros = 0
@@ -106,7 +121,7 @@ def main():
                     erros += 1
                 elif r is not None:
                     lidos[chave(*s)] = r
-        a, b = gravar(lidos, len(secoes))
+        a, b = gravar(lidos, len(secoes), nuvem)
         validos = a + b
         print(f"{dt.datetime.now():%H:%M:%S} {len(lidos)}/{len(secoes)} seções lidas | "
               f"Lula {a:,} ({a / validos:.2%}) × Flávio {b:,} ({b / validos:.2%})" if validos else

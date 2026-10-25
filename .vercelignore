@@ -7,3 +7,4 @@ __pycache__/
 .env*
 public/live.json
 public/ensaio.json
+.github/

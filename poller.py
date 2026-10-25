@@ -13,13 +13,12 @@ import datetime as dt
 import json
 import os
 import time
-import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 
+import armazem
 import modelo
-import redis_tcp
 import tse
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -120,6 +119,20 @@ class FonteTSE:
             },
             "log": f"{len(mudou)} municípios baixados" + (f", {pendentes} ficam pro próximo ciclo" if pendentes > 0 else ""),
         }
+
+    def estado(self):
+        """O que precisa sobreviver a um reinício (ex.: a troca de execução no GitHub Actions)."""
+        return {"cd": [m["uf"] + m["cd"] for m in self.muns], "secoes": self.secoes_vistas.tolist(),
+                **{k: getattr(self, k).astype(int).tolist() for k in ("a2", "b2", "comparec2", "el_ap")}}
+
+    def restaurar(self, estado):
+        pos = {cd: i for i, cd in enumerate(estado["cd"])}
+        for j, m in enumerate(self.muns):
+            i = pos.get(m["uf"] + m["cd"])
+            if i is not None:
+                self.secoes_vistas[j] = estado["secoes"][i]
+                for k in ("a2", "b2", "comparec2", "el_ap"):
+                    getattr(self, k)[j] = estado[k][i]
 
     def _apurado(self):
         return {"a2": self.a2.copy(), "b2": self.b2.copy(), "comparec2": self.comparec2.copy(),
@@ -245,7 +258,7 @@ def resumo_exterior(muns, base, apurado, bu=None):
     }
 
 
-def montar_json(muns, base, leitura, resultado, historico, modo, intervalo):
+def montar_json(muns, base, leitura, resultado, historico, modo, intervalo, bu_exterior=None):
     of = leitura["oficial"]
     validos_of = of["a"] + of["b"]
     pesos = {u: float(base["eleitores"][base["uf"] == u].sum()) for u in np.unique(base["uf"])}
@@ -261,7 +274,7 @@ def montar_json(muns, base, leitura, resultado, historico, modo, intervalo):
         "primeiro_turno": {"a_pct": a1 / v1, "b_pct": b1 / v1, "base_dois": a1 / (a1 + b1)},
         "oficial": {**of, "a_pct": of["a"] / validos_of if validos_of else None},
         "modelo": resultado,
-        "exterior": resumo_exterior(muns, base, leitura["apurado"], bu=None if modo == "ensaio" else carregar_bu_exterior()),
+        "exterior": resumo_exterior(muns, base, leitura["apurado"], bu=bu_exterior),
         "historico": historico,
     }
 
@@ -276,58 +289,6 @@ def gravar(caminho, dado):
     return corpo
 
 
-def carregar_env(caminho):
-    """Lê KEY=VALOR de um .env.local (o formato que a Vercel mostra), sem sobrescrever o ambiente."""
-    if not os.path.exists(caminho):
-        return
-    with open(caminho) as f:
-        for linha in f:
-            linha = linha.strip()
-            if linha and not linha.startswith("#") and "=" in linha:
-                chave, valor = linha.split("=", 1)
-                os.environ.setdefault(chave.strip(), valor.strip().strip('"').strip("'"))
-
-
-class PublicadorRedis:
-    """Grava o live.json no Redis que a função api/live.js da Vercel lê.
-
-    Aceita REDIS_URL (protocolo Redis, como o Redis Cloud da Vercel) ou a API REST da
-    Upstash (KV_REST_API_URL + KV_REST_API_TOKEN).
-    """
-
-    def __init__(self):
-        env = os.environ
-
-        def achar(sufixo):  # a Vercel deixa trocar o prefixo KV_ na criação do banco
-            return next((v for k, v in env.items() if k.endswith(sufixo) and "READ_ONLY" not in k), None)
-
-        self.url = (env.get("KV_REST_API_URL") or env.get("UPSTASH_REDIS_REST_URL") or achar("_REST_API_URL") or "").rstrip("/")
-        self.token = env.get("KV_REST_API_TOKEN") or env.get("UPSTASH_REDIS_REST_TOKEN") or achar("_REST_API_TOKEN")
-        url_redis = env.get("REDIS_URL") or env.get("KV_URL")
-        self.tcp = redis_tcp.RedisTCP(url_redis) if url_redis and not (self.url and self.token) else None
-
-    @property
-    def ativo(self):
-        return bool(self.tcp or (self.url and self.token))
-
-    @property
-    def destino(self):
-        return f"{self.tcp.host}:{self.tcp.porta}" if self.tcp else self.url
-
-    def publicar(self, corpo):
-        if self.tcp:
-            resposta = self.tcp.comando("SET", "live", corpo)
-            if resposta != "OK":
-                raise RuntimeError(f"Redis respondeu {resposta!r}")
-            return
-        req = urllib.request.Request(f"{self.url}/set/live", data=corpo, method="POST",
-                                     headers={"Authorization": f"Bearer {self.token}"})
-        with urllib.request.urlopen(req, timeout=10) as r:
-            resposta = json.loads(r.read())
-        if resposta.get("result") != "OK":
-            raise RuntimeError(f"Redis respondeu {resposta}")
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ensaio", action="store_true", help="simula um 2º turno em cima da base de 2026")
@@ -336,25 +297,39 @@ def main():
     ap.add_argument("--intervalo", type=float, default=30)
     ap.add_argument("--sims", type=int, default=10_000)
     ap.add_argument("--saida", default=None, help="padrão: public/live.json (ou public/ensaio.json no ensaio)")
+    ap.add_argument("--duracao-min", type=float, default=None,
+                    help="encerra depois de N minutos (no GitHub Actions, para a próxima execução assumir)")
     args = ap.parse_args()
     args.saida = args.saida or (SAIDA.replace("live.json", "ensaio.json") if args.ensaio else SAIDA)
 
     muns, base = carregar_base()
     fonte = FonteEnsaio(base, args.alvo, args.minutos) if args.ensaio else FonteTSE(muns)
     modo = "ensaio" if args.ensaio else "ao vivo"
-    carregar_env(os.path.join(AQUI, ".env.local"))
-    publicador = None if args.ensaio else PublicadorRedis()  # o ensaio nunca vai para o site
-    if publicador and publicador.ativo:
-        print(f"enviando o live.json para o Redis em {publicador.destino}", flush=True)
-    elif not args.ensaio:
+    armazem.carregar_env(os.path.join(AQUI, ".env.local"))
+    nuvem = None if args.ensaio else armazem.Armazem()  # o ensaio nunca vai para o site
+    if nuvem and nuvem.ativo:
+        print(f"enviando o live.json para o Redis em {nuvem.destino}", flush=True)
+    elif nuvem:
         print("sem REDIS_URL (nem KV_REST_API_URL/KV_REST_API_TOKEN): gravando só o arquivo local", flush=True)
+        nuvem = None
     arq_hist = os.path.join(AQUI, "data", f"historico_{'ensaio' if args.ensaio else '2t'}.json")
     historico = []
-    if not args.ensaio and os.path.exists(arq_hist):
+    if nuvem:
+        # o Redis é a fonte da verdade: outra execução pode ter rodado desde a última vez aqui
+        anterior = nuvem.get_json("live")
+        if anterior and anterior.get("modo") == "ao vivo":
+            historico = anterior.get("historico", [])
+        estado = nuvem.get_json("estado_poller")
+        if estado:
+            fonte.restaurar(estado)
+            print(f"retomando: {len(historico)} pontos de histórico, "
+                  f"{sum(1 for s in estado['secoes'] if s)} municípios já com votos", flush=True)
+    elif not args.ensaio and os.path.exists(arq_hist):
         with open(arq_hist) as f:
             historico = json.load(f)
 
-    while True:
+    fim = time.monotonic() + args.duracao_min * 60 if args.duracao_min else None
+    while fim is None or time.monotonic() < fim:
         inicio = time.monotonic()
         try:
             leitura = fonte.atualizar()
@@ -371,11 +346,15 @@ def main():
                 historico.append(ponto)
                 with open(arq_hist, "w") as f:
                     json.dump(historico, f)
-            corpo = gravar(args.saida, montar_json(muns, base, leitura, r, historico, modo, args.intervalo))
+            bu = None
+            if not args.ensaio:
+                bu = carregar_bu_exterior() or (nuvem.get_json("exterior_bu") if nuvem else None)
+            corpo = gravar(args.saida, montar_json(muns, base, leitura, r, historico, modo, args.intervalo, bu))
             envio = ""
-            if publicador and publicador.ativo:
+            if nuvem:
                 try:
-                    publicador.publicar(corpo)
+                    nuvem.set("live", corpo)
+                    nuvem.set("estado_poller", json.dumps(fonte.estado()).encode())
                     envio = ", enviado ao site"
                 except Exception as erro:  # o site fica com a leitura anterior; tenta de novo no próximo ciclo
                     envio = f", FALHOU o envio ao site: {erro!r}"

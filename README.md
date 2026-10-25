@@ -33,7 +33,27 @@ ficar ligado durante a apuração e envia o resultado ao Redis a cada 30 segundo
 
 Antes do primeiro envio, `/live.json` responde 503 ("ainda sem dados") e a página mostra um aviso.
 
-## Rodar durante a apuração
+## Rodar na nuvem (GitHub Actions)
+
+O workflow `.github/workflows/apuracao.yml` roda o poller e o leitor de boletins do exterior
+nas máquinas do GitHub, sem depender de nenhum computador ligado:
+
+1. Cadastre a `REDIS_URL` como segredo do repositório (o valor sai do `.env.local`):
+
+   ```bash
+   python3 -c "import re;print(re.search(r'REDIS_URL=[\"\x27]?([^\"\x27\n]+)', open('.env.local').read()).group(1), end='')" | gh secret set REDIS_URL
+   ```
+
+2. Inicie a primeira execução: **Actions → Apuração ao vivo → Run workflow** (ou `gh workflow run apuracao.yml`).
+
+Cada execução dura ~5h30. O agendamento a cada 10 minutos deixa a próxima na fila (as
+intermediárias aparecem como canceladas, é normal) e ela retoma do estado salvo no Redis:
+histórico dos gráficos, municípios já apurados e boletins do exterior já lidos. Depois do
+meio-dia de 26/10 as execuções saem na hora; para desligar antes, `gh workflow disable apuracao.yml`.
+
+Nunca rode o poller no seu computador ao mesmo tempo que o Actions: os dois gravariam no mesmo Redis.
+
+## Rodar durante a apuração (no seu computador)
 
 ```bash
 python3 poller.py         # projeção a cada 30s; envia ao Redis se houver .env.local

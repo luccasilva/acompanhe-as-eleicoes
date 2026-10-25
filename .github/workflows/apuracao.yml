@@ -1,0 +1,53 @@
+name: Apuração ao vivo
+
+# Roda o poller e o leitor de boletins do exterior durante a apuração, gravando no Redis que
+# o site (Vercel) lê. Cada execução dura ~5h30; o agendamento a cada 10 minutos deixa a
+# próxima na fila, e ela retoma do estado salvo no Redis quando a anterior termina.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/10 * * * *"
+
+concurrency:
+  group: apuracao
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  apuracao:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      TZ: America/Sao_Paulo
+      REDIS_URL: ${{ secrets.REDIS_URL }}
+      FIM_DA_APURACAO: "202610261200" # depois disso as execuções agendadas saem na hora
+    steps:
+      - name: Ainda é dia de apuração?
+        id: janela
+        run: |
+          if [ "$(date +%Y%m%d%H%M)" -gt "$FIM_DA_APURACAO" ]; then
+            echo "Apuração encerrada; nada a fazer."
+            echo "encerrada=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.janela.outputs.encerrada != '1'
+
+      - uses: actions/setup-python@v5
+        if: steps.janela.outputs.encerrada != '1'
+        with:
+          python-version: "3.12"
+
+      - name: Dependências
+        if: steps.janela.outputs.encerrada != '1'
+        run: pip install numpy
+
+      - name: Poller e boletins do exterior
+        if: steps.janela.outputs.encerrada != '1'
+        run: |
+          test -n "$REDIS_URL" || { echo "Falta o segredo REDIS_URL no repositório"; exit 1; }
+          python3 -u exterior_bu.py --duracao-min 330 &
+          python3 -u poller.py --duracao-min 330 &
+          wait
