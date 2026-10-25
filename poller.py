@@ -153,7 +153,7 @@ class FonteTSE:
 
 
 class FonteEnsaio:
-    """2º turno inventado sobre a base real do 1º turno, para testar a página antes das 17h.
+    """2º turno inventado sobre a base real do 1º turno, para testar a página antes da apuração.
 
     Cada município tem uma virada sorteada (nacional + região + UF + município) e um
     horário de chegada que depende da região e do porte; a apuração inteira dura
@@ -214,7 +214,7 @@ def resumo_exterior(muns, base, apurado, bu=None):
     """Brasileiros que votam fora do país: 1º turno, parcial do 2º turno e cada cidade.
 
     O parcial vem da totalização do TSE ou dos boletins de urna lidos seção por seção,
-    o que cobrir mais eleitores (antes das 17h, só os boletins existem).
+    o que cobrir mais eleitores (antes da apuração oficial, só os boletins existem).
     """
     zz = np.flatnonzero(base["uf"] == "zz")
     a1, b1 = base["a1"][zz], base["b1"][zz]

@@ -62,7 +62,7 @@ python3 servidor.py       # (opcional) a página local em http://127.0.0.1:8766
 ```
 
 O exterior vota no horário local de cada país, então seus boletins saem antes da totalização
-oficial (17h de Brasília). `exterior_bu.py` lê esses boletins (`bu.dat`, decodificado por
+oficial, que começa quando a votação termina no Brasil (hoje, prorrogada até as 19h de Brasília). `exterior_bu.py` lê esses boletins (`bu.dat`, decodificado por
 `bu.py`) e grava `data/exterior_bu.json`; o poller usa essa fonte na seção do exterior enquanto
 ela cobrir mais eleitores que a totalização do TSE.
 

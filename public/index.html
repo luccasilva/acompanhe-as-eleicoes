@@ -428,7 +428,7 @@ function render() {
   }
   if (!temDado) {
     $("prob").textContent = "—";
-    $("prob-contra").textContent = "Aguardando os primeiros boletins de urna (as seções fecham às 17h de Brasília).";
+    $("prob-contra").textContent = "Aguardando os primeiros boletins de urna. A votação foi prorrogada até as 19h de Brasília em todo o país, e a apuração começa depois disso.";
     $("split").innerHTML = "";
   } else if (!pronta) {
     $("prob").textContent = "—";
@@ -479,7 +479,7 @@ function exterior(ex, A, B) {
   $("ex-1t-d").textContent = `entre os dois · ${A} ${fmt(t1.a_pct)} × ${B} ${fmt(t1.b_pct)} dos válidos · ${fmtN(t1.comparec)} votantes de ${fmtN(t1.eleitores)} eleitores`;
   const tem = t2.fatia_a != null, porBoletim = ex.fonte === "boletins de urna";
   $("ex-fonte").textContent = porBoletim
-    ? "Como cada país fecha as urnas no seu horário, estes números vêm dos boletins de urna de cada seção, que o TSE publica assim que chegam, antes da totalização oficial das 17h."
+    ? "Como cada país fecha as urnas no seu horário, estes números vêm dos boletins de urna de cada seção, que o TSE publica assim que chegam, antes da totalização oficial, que só começa quando a votação termina no Brasil (prorrogada até as 19h)."
     : "";
   $("ex-2t").textContent = tem ? `${A} ${fmt(t2.fatia_a)}` : "—";
   const cobertura = porBoletim && ex.secoes

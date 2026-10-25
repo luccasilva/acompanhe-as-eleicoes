@@ -3,8 +3,9 @@ name: Apuração ao vivo
 # Roda o poller e o leitor de boletins do exterior durante a apuração, gravando no Redis que
 # o site (Vercel) lê. Cada execução dura até ~5h30; o agendamento a cada 10 minutos deixa a
 # próxima na fila, e ela retoma do estado salvo no Redis quando a anterior termina.
-# Uma execução que começa antes das 16h30 termina às 16h40, para que a troca de máquina
-# aconteça antes das 17h e a seguinte cubra a apuração inteira (16h40 → ~22h10).
+# Uma execução que começa antes das 18h30 termina às 18h40, para que a troca de máquina
+# aconteça antes da apuração (a votação foi prorrogada até as 19h) e a seguinte cubra a
+# apuração inteira (18h40 → ~00h10).
 on:
   workflow_dispatch:
   schedule:
@@ -26,7 +27,7 @@ jobs:
       TZ: America/Sao_Paulo
       REDIS_URL: ${{ secrets.REDIS_URL }}
       FIM_DA_APURACAO: "202610261200" # depois disso as execuções agendadas saem na hora
-      TROCA_ANTES_DA_APURACAO: "16:40"
+      TROCA_ANTES_DA_APURACAO: "18:40"
     steps:
       - name: Ainda é dia de apuração?
         id: janela

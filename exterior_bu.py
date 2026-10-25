@@ -1,7 +1,7 @@
 """Lê, seção por seção, os boletins de urna do 2º turno no exterior assim que o TSE os publica.
 
 Fora do Brasil as urnas fecham no horário local, então boa parte do exterior já terminou de
-votar antes de o TSE começar a divulgar a totalização, às 17h de Brasília. Os boletins de
+votar antes de o TSE começar a divulgar a totalização (depois que a votação termina no Brasil). Os boletins de
 cada seção, porém, ficam públicos no site de resultados assim que chegam. Este script baixa
 esses boletins, soma os votos por cidade e grava data/exterior_bu.json, que o poller usa na
 seção do exterior. Cada boletim só é baixado uma vez.
