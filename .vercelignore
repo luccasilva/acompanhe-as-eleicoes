@@ -1,0 +1,9 @@
+# Na Vercel só vão a página (public/), a função (api/) e o vercel.json.
+# O poller e o modelo rodam fora da Vercel.
+*.py
+data/
+.claude/
+__pycache__/
+.env*
+public/live.json
+public/ensaio.json

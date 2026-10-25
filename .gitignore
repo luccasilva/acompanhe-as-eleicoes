@@ -1,0 +1,10 @@
+__pycache__/
+.env*
+.claude/
+.DS_Store
+
+# dados gerados durante a noite; a base do 1º turno fica no repositório
+data/*
+!data/base_1t_2026.json
+public/live.json
+public/ensaio.json
