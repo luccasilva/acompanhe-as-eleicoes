@@ -8,7 +8,7 @@ arquivos públicos de resultados do TSE.
 
 ```
 TSE (JSON públicos) ─► poller.py ─────────┐
-TSE (boletins do exterior) ─► exterior_bu.py ─┘─► Redis (Upstash) ─► api/live.js (Vercel) ─► página
+TSE (boletins do exterior) ─► exterior_bu.py ─┘─► Redis ─► api/live.js (Vercel) ─► página
 ```
 
 A Vercel só serve a página (`public/`) e a função `api/live.js`, que lê do Redis o último
@@ -19,15 +19,14 @@ ficar ligado durante a apuração e envia o resultado ao Redis a cada 30 segundo
 
 1. Na Vercel: **Add New → Project** e importe `luccasilva/acompanhe-as-eleicoes`.
    Framework Preset: **Other**. Não mude build nem output: o `vercel.json` já aponta para `public/`.
-2. No projeto, aba **Storage → Create Database → Upstash for Redis** (plano gratuito) e
-   conecte ao projeto. Isso cria as variáveis `KV_REST_API_URL` e `KV_REST_API_TOKEN`
-   (se você trocar o prefixo, tudo bem: o código aceita qualquer `*_REST_API_URL`).
+2. No projeto, aba **Storage → Create Database → Redis** e conecte ao projeto. Isso cria a
+   variável `REDIS_URL`. (Também funciona com **Upstash for Redis**, que cria
+   `KV_REST_API_URL` e `KV_REST_API_TOKEN`; o código aceita os dois.)
 3. **Deployments → ⋯ → Redeploy**, para a função enxergar as variáveis.
-4. Copie as duas variáveis para um arquivo `.env.local` na pasta do projeto (ele fica fora do Git):
+4. Copie a variável para um arquivo `.env.local` na pasta do projeto (ele fica fora do Git):
 
    ```
-   KV_REST_API_URL="https://....upstash.io"
-   KV_REST_API_TOKEN="..."
+   REDIS_URL="redis://default:...@....db.redis.io:12345"
    ```
 
 5. Reinicie o poller. A cada ciclo ele passa a imprimir "enviado ao site".
@@ -60,6 +59,7 @@ python3 servidor.py                         # e abra http://127.0.0.1:8766/?ensa
 - `baixar_base.py`: baixa o 1º turno de cada município (`data/base_1t_2026.json`, já incluído).
 - `modelo.py`: projeção (virada + comparecimento + Monte Carlo com erro por UF e nacional).
 - `poller.py`: loop ao vivo (ou ensaio) que roda o modelo, grava `public/live.json` e envia ao Redis.
+- `redis_tcp.py`: cliente Redis mínimo (só biblioteca padrão) para a `REDIS_URL`.
 - `exterior_bu.py` / `bu.py`: leitura dos boletins de urna do exterior.
 - `public/index.html`: a página; lê `live.json` a cada 30s.
 - `api/live.js` / `vercel.json`: a função e a configuração da Vercel.

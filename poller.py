@@ -19,6 +19,7 @@ from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 
 import modelo
+import redis_tcp
 import tse
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -288,7 +289,11 @@ def carregar_env(caminho):
 
 
 class PublicadorRedis:
-    """Grava o live.json no Redis (Upstash) que a função api/live.js da Vercel lê."""
+    """Grava o live.json no Redis que a função api/live.js da Vercel lê.
+
+    Aceita REDIS_URL (protocolo Redis, como o Redis Cloud da Vercel) ou a API REST da
+    Upstash (KV_REST_API_URL + KV_REST_API_TOKEN).
+    """
 
     def __init__(self):
         env = os.environ
@@ -298,12 +303,23 @@ class PublicadorRedis:
 
         self.url = (env.get("KV_REST_API_URL") or env.get("UPSTASH_REDIS_REST_URL") or achar("_REST_API_URL") or "").rstrip("/")
         self.token = env.get("KV_REST_API_TOKEN") or env.get("UPSTASH_REDIS_REST_TOKEN") or achar("_REST_API_TOKEN")
+        url_redis = env.get("REDIS_URL") or env.get("KV_URL")
+        self.tcp = redis_tcp.RedisTCP(url_redis) if url_redis and not (self.url and self.token) else None
 
     @property
     def ativo(self):
-        return bool(self.url and self.token)
+        return bool(self.tcp or (self.url and self.token))
+
+    @property
+    def destino(self):
+        return f"{self.tcp.host}:{self.tcp.porta}" if self.tcp else self.url
 
     def publicar(self, corpo):
+        if self.tcp:
+            resposta = self.tcp.comando("SET", "live", corpo)
+            if resposta != "OK":
+                raise RuntimeError(f"Redis respondeu {resposta!r}")
+            return
         req = urllib.request.Request(f"{self.url}/set/live", data=corpo, method="POST",
                                      headers={"Authorization": f"Bearer {self.token}"})
         with urllib.request.urlopen(req, timeout=10) as r:
@@ -329,9 +345,9 @@ def main():
     carregar_env(os.path.join(AQUI, ".env.local"))
     publicador = None if args.ensaio else PublicadorRedis()  # o ensaio nunca vai para o site
     if publicador and publicador.ativo:
-        print(f"enviando o live.json para o Redis em {publicador.url}", flush=True)
+        print(f"enviando o live.json para o Redis em {publicador.destino}", flush=True)
     elif not args.ensaio:
-        print("sem KV_REST_API_URL/KV_REST_API_TOKEN: gravando só o arquivo local", flush=True)
+        print("sem REDIS_URL (nem KV_REST_API_URL/KV_REST_API_TOKEN): gravando só o arquivo local", flush=True)
     arq_hist = os.path.join(AQUI, "data", f"historico_{'ensaio' if args.ensaio else '2t'}.json")
     historico = []
     if not args.ensaio and os.path.exists(arq_hist):
