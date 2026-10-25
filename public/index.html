@@ -422,8 +422,10 @@ function render() {
   const pronta = d.chance ? d.chance.pronta : temDado;
   $("leg-cand").innerHTML = `<span><i class="chave" style="background:var(--a)"></i>${escapar(A)}</span><span><i class="chave" style="background:var(--b)"></i>${escapar(B)}</span>`;
   const cons = d.consistencia;
-  if (cons && cons.validos_oficiais > 0 && cons.diferenca > 0.005) {
-    $("alerta").textContent = `O painel ainda não leu todos os municípios que o TSE já totalizou (faltam ${fmt(cons.diferenca, 1)} dos votos válidos). A projeção pode estar alguns ciclos atrás do placar oficial.`;
+  // só com algum volume: no começo o TSE costuma somar no total nacional votos que ainda não
+  // publicou por município (e, se a divulgação para no meio, isso pode ficar assim por um tempo)
+  if (cons && cons.validos_oficiais > 0 && cons.diferenca > 0.005 && d.oficial.secoes_frac >= 0.01) {
+    $("alerta").textContent = `Parte dos votos que o TSE já soma no total nacional ainda não aparece nos arquivos por município (${fmt(cons.diferenca, 1)} dos válidos). A projeção usa só os municípios já detalhados e se atualiza quando esses arquivos chegarem.`;
     $("alerta").style.display = "block";
   }
   if (!temDado) {
