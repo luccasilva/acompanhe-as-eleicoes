@@ -341,7 +341,7 @@ def main():
     armazem.carregar_env(os.path.join(AQUI, ".env.local"))
     nuvem = None if args.ensaio else armazem.Armazem()  # o ensaio nunca vai para o site
     if nuvem and nuvem.ativo:
-        print(f"enviando o live.json para o Redis em {nuvem.destino}", flush=True)
+        print("enviando o live.json para o Redis", flush=True)  # sem o endereço: os registros do Actions são públicos
     elif nuvem:
         print("sem REDIS_URL (nem KV_REST_API_URL/KV_REST_API_TOKEN): gravando só o arquivo local", flush=True)
         nuvem = None

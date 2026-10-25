@@ -352,6 +352,8 @@ tr:hover td { background: var(--page); }
 const fmt = (x, d = 1) => x == null || isNaN(x) ? "—" : (x * 100).toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d }) + "%";
 const fmtPP = (x, d = 1) => x == null || isNaN(x) ? "—" : (x >= 0 ? "+" : "−") + Math.abs(x * 100).toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d }) + " p.p.";
 const fmtN = x => x == null ? "—" : Math.round(x).toLocaleString("pt-BR");
+// todo texto vindo do JSON que entra em innerHTML passa por aqui (nomes, horários)
+const escapar = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const fmtMi = x => (x / 1e6).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " mi";
 const $ = id => document.getElementById(id);
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -418,7 +420,7 @@ function render() {
 
   const temDado = m.apurado.frac_eleitores > 0;
   const pronta = d.chance ? d.chance.pronta : temDado;
-  $("leg-cand").innerHTML = `<span><i class="chave" style="background:var(--a)"></i>${A}</span><span><i class="chave" style="background:var(--b)"></i>${B}</span>`;
+  $("leg-cand").innerHTML = `<span><i class="chave" style="background:var(--a)"></i>${escapar(A)}</span><span><i class="chave" style="background:var(--b)"></i>${escapar(B)}</span>`;
   const cons = d.consistencia;
   if (cons && cons.validos_oficiais > 0 && cons.diferenca > 0.005) {
     $("alerta").textContent = `O painel ainda não leu todos os municípios que o TSE já totalizou (faltam ${fmt(cons.diferenca, 1)} dos votos válidos). A projeção pode estar alguns ciclos atrás do placar oficial.`;
@@ -436,7 +438,8 @@ function render() {
   } else {
     $("prob").textContent = fmt(m.prob_a, m.prob_a > .995 || m.prob_a < .005 ? 1 : 0);
     $("prob-contra").textContent = `${B}: ${fmt(1 - m.prob_a, 0)}`;
-    $("split").innerHTML = `<div style="flex:${m.prob_a};background:var(--a)"></div><div style="flex:${1 - m.prob_a};background:var(--b)"></div>`;
+    const pa = Number(m.prob_a) || 0;
+    $("split").innerHTML = `<div style="flex:${pa};background:var(--a)"></div><div style="flex:${1 - pa};background:var(--b)"></div>`;
   }
 
   const pr = m.projecao;
@@ -498,7 +501,7 @@ function exterior(ex, A, B) {
     .sort((x, y) => (y.fatia_a_apurada != null) - (x.fatia_a_apurada != null) || y.eleitores - x.eleitores)
     .slice(0, 12);
   $("ex-tbody").innerHTML = cidades.map(c => `<tr>
-    <td>${nomeCidade(c.nome)}</td>
+    <td>${escapar(nomeCidade(c.nome))}</td>
     <td>${fmtN(c.eleitores)}</td>
     <td>${fmt(c.frac_eleitores, 0)}</td>
     <td>${fmt(c.base_1t_dois)}</td>
@@ -575,7 +578,7 @@ function graficoProjecao(hist) {
     <circle class="hdot" r="4" fill="var(--muted)" stroke="var(--surface)" stroke-width="2" style="display:none"/>
     <rect x="${g.ml}" y="0" width="${g.W - g.ml - g.mr}" height="${g.H}" fill="transparent"/></svg><div class="tip"></div>`;
   el.innerHTML = s;
-  hover(el, g, pts, fx, p => `<b>${p.hora} · ${fmt(p.secoes_frac)} apurado</b>
+  hover(el, g, pts, fx, p => `<b>${escapar(p.hora)} · ${fmt(p.secoes_frac)} apurado</b>
       <div class="l"><span>Projeção</span><span>${fmt(p.p50, 2)}</span></div>
       <div class="l"><span>Intervalo 90%</span><span>${fmt(p.p05)}–${fmt(p.p95)}</span></div>
       <div class="l"><span>Parcial</span><span>${fmt(p.ingenuo, 2)}</span></div>`,
@@ -598,8 +601,8 @@ function graficoProb(hist) {
     <circle class="hdot" r="4" fill="var(--a)" stroke="var(--surface)" stroke-width="2" style="display:none"/>
     <rect x="${g.ml}" y="0" width="${g.W - g.ml - g.mr}" height="${g.H}" fill="transparent"/></svg><div class="tip"></div>`;
   el.innerHTML = s;
-  hover(el, g, pts, fx, p => `<b>${p.hora} · ${fmt(p.secoes_frac)} apurado</b>
-      <div class="l"><span>Chance do ${dados.candidatos.a.nome}</span><span>${fmt(p.prob, 0)}</span></div>
+  hover(el, g, pts, fx, p => `<b>${escapar(p.hora)} · ${fmt(p.secoes_frac)} apurado</b>
+      <div class="l"><span>Chance do ${escapar(dados.candidatos.a.nome)}</span><span>${fmt(p.prob, 0)}</span></div>
       <div class="l"><span>Projeção</span><span>${fmt(p.p50, 2)}</span></div>`,
     p => [p.prob]);
 }
@@ -612,7 +615,7 @@ function mapa(ufs) {
   for (const [uf, [c, r]] of Object.entries(GRADE)) {
     const u = por[uf], v = u ? u.virada_observada : null, cor = corVirada(v), tinta = tintaSobre(cor);
     const titulo = u ? `${u.nome}: virada ${fmtPP(v)} · apurado ${fmt(u.frac_eleitores, 0)} · projeção ${fmt(u.projecao.p50)}` : uf.toUpperCase();
-    s += `<div class="uf-tile" style="grid-column:${c + 1};grid-row:${r + 1};background:${cor};color:${tinta}" title="${titulo}">
+    s += `<div class="uf-tile" style="grid-column:${c + 1};grid-row:${r + 1};background:${cor};color:${tinta}" title="${escapar(titulo)}">
       ${uf === "zz" ? "EXT" : uf.toUpperCase()}<small>${v == null ? "—" : fmtPP(v).replace(" p.p.", "")}</small></div>`;
   }
   el.innerHTML = s;
@@ -632,7 +635,7 @@ function tabela(ufs) {
     return ordem.dir * ((va ?? -Infinity) - (vb ?? -Infinity));
   });
   $("tbody").innerHTML = linhas.map(u => `<tr>
-    <td><i class="mini" style="background:${!temDado ? "var(--axis)" : u.projecao.p50 >= .5 ? "var(--a)" : "var(--b)"}"></i>${u.nome}</td>
+    <td><i class="mini" style="background:${!temDado ? "var(--axis)" : u.projecao.p50 >= .5 ? "var(--a)" : "var(--b)"}"></i>${escapar(u.nome)}</td>
     <td>${fmt(u.frac_eleitores, 0)}</td>
     <td>${fmt(u.base_1t_dois)}</td>
     <td>${fmt(u.fatia_a_apurada)}</td>
